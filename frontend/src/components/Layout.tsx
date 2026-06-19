@@ -45,38 +45,47 @@ export const Layout: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-[#0a0a0a] text-[#ededed] overflow-hidden">
-      <Toaster 
+    <div
+      className="flex h-screen overflow-hidden"
+      style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}
+    >
+      <Toaster
         position="bottom-right"
         toastOptions={{
           style: {
-            background: '#1f1f1f',
-            color: '#ededed',
-            border: '1px solid #27272a',
+            background: "var(--toast-bg)",
+            color: "var(--toast-color)",
+            border: "1px solid var(--toast-border)",
           },
           success: {
             iconTheme: {
-              primary: '#10b981',
-              secondary: '#1f1f1f',
+              primary: "#10b981",
+              secondary: "var(--toast-bg)",
             },
           },
         }}
       />
+
       {/* Sidebar for Desktop/Tablet */}
       <aside
-        className={`hidden md:flex flex-shrink-0 border-r border-[#27272a] bg-[#141414] flex flex-col transition-all duration-200 ${
+        className={`hidden md:flex flex-shrink-0 flex-col transition-all duration-200 ${
           collapsed ? "w-[4.5rem]" : "w-64"
         }`}
+        style={{
+          background: "var(--bg-secondary)",
+          borderRight: "1px solid var(--border-subtle)",
+        }}
       >
         <div
-          className={`flex items-center border-b border-[#27272a] ${
+          className={`flex items-center ${
             collapsed ? "justify-center p-4" : "justify-between p-4 pl-6"
           }`}
+          style={{ borderBottom: "1px solid var(--border-subtle)" }}
         >
           <Link to="/" className="flex items-center gap-3 min-w-0">
             <Film className="w-8 h-8 text-[#10b981] flex-shrink-0" />
             {!collapsed && (
-              <h1 className="text-xl font-bold tracking-tight truncate">
+              <h1 className="text-xl font-bold tracking-tight truncate" style={{ color: "var(--text-primary)" }}>
                 Intermission
               </h1>
             )}
@@ -84,7 +93,16 @@ export const Layout: React.FC = () => {
           {!collapsed && (
             <button
               onClick={() => setCollapsed(true)}
-              className="p-1.5 rounded-md text-[#52525b] hover:text-[#ededed] hover:bg-[#27272a]/50"
+              className="p-1.5 rounded-md transition-colors"
+              style={{ color: "var(--text-muted)" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
+                (e.currentTarget as HTMLButtonElement).style.background = "var(--border-subtle)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)";
+                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+              }}
               title="Collapse sidebar"
             >
               <PanelLeftClose className="w-5 h-5" />
@@ -96,7 +114,16 @@ export const Layout: React.FC = () => {
           <div className="px-2 pt-2">
             <button
               onClick={() => setCollapsed(false)}
-              className="w-full flex items-center justify-center p-2 rounded-md text-[#52525b] hover:text-[#ededed] hover:bg-[#27272a]/50"
+              className="w-full flex items-center justify-center p-2 rounded-md transition-colors"
+              style={{ color: "var(--text-muted)" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
+                (e.currentTarget as HTMLButtonElement).style.background = "var(--border-subtle)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)";
+                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+              }}
               title="Expand sidebar"
             >
               <PanelLeftOpen className="w-5 h-5" />
@@ -116,11 +143,12 @@ export const Layout: React.FC = () => {
                 title={collapsed ? item.name : undefined}
                 className={`flex items-center rounded-md transition-colors ${
                   collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5"
-                } ${
-                  isActive
-                    ? "bg-[#10b981]/10 text-[#10b981] font-medium"
-                    : "text-[#a1a1aa] hover:text-[#ededed] hover:bg-[#27272a]/50"
                 }`}
+                style={{
+                  background: isActive ? "var(--accent-light)" : "transparent",
+                  color: isActive ? "var(--accent-primary)" : "var(--text-secondary)",
+                  fontWeight: isActive ? 500 : undefined,
+                }}
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
                 {!collapsed && <span>{item.name}</span>}
@@ -129,10 +157,20 @@ export const Layout: React.FC = () => {
           })}
         </nav>
 
-        <div className={`border-t border-[#27272a] ${collapsed ? "p-2" : "p-4"}`}>
+        <div
+          className={`${collapsed ? "p-2" : "p-4"}`}
+          style={{ borderTop: "1px solid var(--border-subtle)" }}
+        >
           {collapsed ? (
             <div className="flex justify-center mb-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-[#27272a] flex items-center justify-center text-sm font-medium text-[#ededed] border border-[#27272a]">
+              <div
+                className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium"
+                style={{
+                  background: "var(--border-subtle)",
+                  color: "var(--text-primary)",
+                  border: "1px solid var(--border-focus)",
+                }}
+              >
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
@@ -142,7 +180,14 @@ export const Layout: React.FC = () => {
             </div>
           ) : (
             <div className="flex items-center gap-3 px-3 py-2 mb-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#27272a] flex items-center justify-center text-sm font-medium text-[#ededed] border border-[#27272a]">
+              <div
+                className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center text-sm font-medium"
+                style={{
+                  background: "var(--border-subtle)",
+                  color: "var(--text-primary)",
+                  border: "1px solid var(--border-focus)",
+                }}
+              >
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
@@ -150,19 +195,30 @@ export const Layout: React.FC = () => {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate text-[#ededed]">
-                  {profile?.display_name || user?.email?.split('@')[0]}
+                <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                  {profile?.display_name || user?.email?.split("@")[0]}
                 </p>
-                <p className="text-xs text-[#a1a1aa] truncate">{user?.email}</p>
+                <p className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
+                  {user?.email}
+                </p>
               </div>
             </div>
           )}
           <button
             onClick={handleSignOut}
             title={collapsed ? "Sign out" : undefined}
-            className={`flex w-full items-center text-sm text-[#a1a1aa] hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors ${
+            className={`flex w-full items-center text-sm rounded-md transition-colors ${
               collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5"
             }`}
+            style={{ color: "var(--text-secondary)" }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "#f87171";
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(248,113,113,0.1)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
+              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+            }}
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />
             {!collapsed && "Sign out"}
@@ -171,12 +227,28 @@ export const Layout: React.FC = () => {
       </aside>
 
       {/* Top Bar for Mobile */}
-      <header className="fixed top-0 left-0 right-0 h-14 bg-[#141414]/90 backdrop-blur-md border-b border-[#27272a] z-40 flex items-center justify-between px-4 md:hidden">
+      <header
+        className="fixed top-0 left-0 right-0 h-14 backdrop-blur-md z-40 flex items-center justify-between px-4 md:hidden"
+        style={{
+          background: "var(--glass-bg)",
+          borderBottom: "1px solid var(--border-subtle)",
+        }}
+      >
         <Link to="/" className="flex items-center gap-2">
           <Film className="w-6 h-6 text-[#10b981]" />
-          <span className="font-bold text-lg tracking-tight">Intermission</span>
+          <span className="font-bold text-lg tracking-tight" style={{ color: "var(--text-primary)" }}>
+            Intermission
+          </span>
         </Link>
-        <Link to="/settings" className="w-8 h-8 rounded-full overflow-hidden bg-[#27272a] flex items-center justify-center text-xs font-medium text-[#ededed] border border-[#27272a] hover:opacity-85 transition-opacity">
+        <Link
+          to="/settings"
+          className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-medium hover:opacity-85 transition-opacity"
+          style={{
+            background: "var(--border-subtle)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border-focus)",
+          }}
+        >
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
           ) : (
@@ -186,7 +258,13 @@ export const Layout: React.FC = () => {
       </header>
 
       {/* Bottom Navigation for Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 h-16 bg-[#141414]/95 backdrop-blur-md border-t border-[#27272a] z-40 flex items-center justify-around px-2 md:hidden">
+      <nav
+        className="fixed bottom-0 left-0 right-0 h-16 backdrop-blur-md z-40 flex items-center justify-around px-2 md:hidden"
+        style={{
+          background: "var(--glass-bg)",
+          borderTop: "1px solid var(--border-subtle)",
+        }}
+      >
         {navItems.map((item) => {
           const isActive =
             location.pathname === item.path ||
@@ -195,9 +273,8 @@ export const Layout: React.FC = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={`flex flex-col items-center justify-center flex-1 py-1 gap-1 transition-colors ${
-                isActive ? "text-[#10b981]" : "text-[#a1a1aa] hover:text-[#ededed]"
-              }`}
+              className="flex flex-col items-center justify-center flex-1 py-1 gap-1 transition-colors"
+              style={{ color: isActive ? "var(--accent-primary)" : "var(--text-secondary)" }}
             >
               <item.icon className="w-5 h-5" />
               <span className="text-[10px] font-medium tracking-tight">{item.name}</span>
