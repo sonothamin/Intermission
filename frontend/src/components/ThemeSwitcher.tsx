@@ -3,9 +3,9 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme, type Theme } from "../context/ThemeContext";
 
 const OPTIONS: { value: Theme; label: string; icon: React.ElementType }[] = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
+  { value: "light", label: "", icon: Sun },
+  { value: "dark", label: "", icon: Moon },
+  { value: "system", label: "", icon: Monitor },
 ];
 
 interface ThemeSwitcherProps {
