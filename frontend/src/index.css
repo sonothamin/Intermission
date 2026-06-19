@@ -5,7 +5,8 @@
 @tailwind utilities;
 
 /* ─── Dark Theme (default) ─── */
-:root {
+:root,
+[data-theme="dark"] {
   --bg-primary: #0a0a0a;
   --bg-secondary: #141414;
   --bg-tertiary: #1f1f1f;
@@ -39,6 +40,15 @@
   --toast-bg: #1f1f1f;
   --toast-color: #ededed;
   --toast-border: #27272a;
+
+  /* Auth / marketing panels */
+  --auth-panel-from: #141414;
+  --auth-panel-via: #0d0d0d;
+  --auth-panel-to: #0a0a0a;
+  --auth-card-from: #1a1a1a;
+  --auth-card-to: #121212;
+  --auth-title-gradient-from: #ffffff;
+  --auth-title-gradient-to: #a1a1aa;
 }
 
 /* ─── Light Theme ─── */
@@ -67,6 +77,14 @@
   --toast-bg: #ffffff;
   --toast-color: #09090b;
   --toast-border: #d4d4d8;
+
+  --auth-panel-from: #e4e4e7;
+  --auth-panel-via: #f4f4f5;
+  --auth-panel-to: #fafafa;
+  --auth-card-from: #ffffff;
+  --auth-card-to: #f4f4f5;
+  --auth-title-gradient-from: #09090b;
+  --auth-title-gradient-to: #52525b;
 }
 
 * {
@@ -74,6 +92,10 @@
 }
 
 html {
+  color-scheme: dark light;
+}
+
+[data-theme="dark"] {
   color-scheme: dark;
 }
 
@@ -223,3 +245,14 @@ select option {
 .text-theme-muted { color: var(--text-muted); }
 .border-theme { border-color: var(--border-subtle); }
 .border-theme-focus { border-color: var(--border-focus); }
+.divide-theme > :not([hidden]) ~ :not([hidden]) { border-color: var(--border-subtle); }
+.hover\:bg-theme-secondary:hover { background-color: var(--bg-secondary); }
+.hover\:bg-theme-tertiary:hover { background-color: var(--bg-tertiary); }
+
+/* Media hero overlays — fade into page background */
+.media-hero-overlay-t {
+  background: linear-gradient(to top, var(--bg-primary), color-mix(in srgb, var(--bg-primary) 80%, transparent), color-mix(in srgb, var(--bg-primary) 30%, transparent));
+}
+.media-hero-overlay-l {
+  background: linear-gradient(to right, color-mix(in srgb, var(--bg-primary) 90%, transparent), transparent, transparent);
+}

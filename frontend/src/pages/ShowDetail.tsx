@@ -372,15 +372,15 @@ export const ShowDetail: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           {show.overview && (
             <section className="dense-card">
-              <h2 className="text-sm font-semibold text-[#ededed] uppercase tracking-wider mb-3">
+              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
                 Overview
               </h2>
-              <p className="text-[#a1a1aa] leading-relaxed">{show.overview}</p>
+              <p className="text-theme-secondary leading-relaxed">{show.overview}</p>
             </section>
           )}
 
           <section className="dense-card">
-            <h2 className="text-sm font-semibold text-[#ededed] uppercase tracking-wider mb-4">
+            <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-4">
               Seasons
             </h2>
             <div className="space-y-2">
@@ -393,17 +393,17 @@ export const ShowDetail: React.FC = () => {
                 return (
                   <div
                     key={season.season_number}
-                    className="border border-[#27272a] rounded-lg overflow-hidden"
+                    className="border border-theme rounded-lg overflow-hidden"
                   >
-                    <div className="w-full flex items-center justify-between p-3 bg-[#141414] hover:bg-[#1f1f1f] transition-colors border-b border-[#27272a]/50">
+                    <div className="w-full flex items-center justify-between p-3 bg-theme-secondary hover:bg-theme-tertiary transition-colors border-b border-theme/50">
                       <button
                         onClick={() => toggleSeason(season)}
                         className="flex-1 flex items-center gap-3 text-left outline-none"
                       >
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-[#52525b] flex-shrink-0" />
+                          <ChevronDown className="w-4 h-4 text-theme-muted flex-shrink-0" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-[#52525b] flex-shrink-0" />
+                          <ChevronRight className="w-4 h-4 text-theme-muted flex-shrink-0" />
                         )}
                         {season.poster_url ? (
                           <img
@@ -412,11 +412,11 @@ export const ShowDetail: React.FC = () => {
                             className="w-10 h-14 object-cover rounded flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-10 h-14 bg-[#27272a] rounded flex-shrink-0" />
+                          <div className="w-10 h-14 bg-theme-tertiary rounded flex-shrink-0" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-[#ededed] truncate">{season.name}</p>
-                          <p className="text-xs text-[#52525b]">
+                          <p className="font-medium text-theme-primary truncate">{season.name}</p>
+                          <p className="text-xs text-theme-muted">
                             {season.episode_count} episodes
                             {data && userEntry
                               ? ` · ${watchedCount}/${season.episode_count} watched`
@@ -450,21 +450,21 @@ export const ShowDetail: React.FC = () => {
                     </div>
 
                     {isExpanded && (
-                      <div className="border-t border-[#27272a] bg-[#0a0a0a]">
+                      <div className="border-t border-theme bg-theme-primary">
                         {seasonLoading === season.season_number ? (
                           <div className="flex items-center justify-center py-8">
                             <Loader2 className="w-5 h-5 text-[#10b981] animate-spin" />
                           </div>
                         ) : data ? (
-                          <div className="divide-y divide-[#27272a]">
+                          <div className="divide-y divide-[var(--border-subtle)]">
                             {data.episodes.map((ep) => {
                               const watched = ep.user_progress?.watched ?? false;
                               return (
                                 <div
                                   key={ep.episode_number}
-                                  className="flex items-start gap-3 p-3 hover:bg-[#141414] transition-colors"
+                                  className="flex items-start gap-3 p-3 hover:bg-theme-secondary transition-colors"
                                 >
-                                  <span className="text-xs font-mono text-[#52525b] w-6 text-center mt-1 flex-shrink-0">
+                                  <span className="text-xs font-mono text-theme-muted w-6 text-center mt-1 flex-shrink-0">
                                     {ep.episode_number}
                                   </span>
                                   {ep.still_url && (
@@ -475,15 +475,15 @@ export const ShowDetail: React.FC = () => {
                                     />
                                   )}
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-[#ededed]">
+                                    <p className="text-sm font-medium text-theme-primary">
                                       {ep.episode_number}. {ep.name}
                                     </p>
                                     {ep.overview && (
-                                      <p className="text-xs text-[#52525b] mt-1 line-clamp-2">
+                                      <p className="text-xs text-theme-muted mt-1 line-clamp-2">
                                         {ep.overview}
                                       </p>
                                     )}
-                                    <div className="flex gap-3 mt-1 text-xs text-[#52525b]">
+                                    <div className="flex gap-3 mt-1 text-xs text-theme-muted">
                                       {ep.air_date && <span>{ep.air_date}</span>}
                                       {ep.runtime_minutes && (
                                         <span>{formatRuntime(ep.runtime_minutes)}</span>
@@ -503,7 +503,7 @@ export const ShowDetail: React.FC = () => {
                                       className={`py-1 px-3 text-xs flex items-center gap-1.5 flex-shrink-0 transition-colors font-medium border rounded-md ${
                                         watched
                                           ? "bg-[#10b981]/10 border-[#10b981]/20 text-[#10b981]"
-                                          : "bg-[#27272a] border-[#3f3f46] text-[#ededed] hover:bg-[#3f3f46] hover:text-white"
+                                          : "bg-theme-tertiary border-theme-focus text-theme-primary hover:bg-theme-tertiary hover:text-white"
                                       }`}
                                       title={watched ? "Mark unwatched" : "Mark watched"}
                                     >
@@ -535,7 +535,7 @@ export const ShowDetail: React.FC = () => {
                             })}
                           </div>
                         ) : (
-                          <p className="text-sm text-[#52525b] p-4 text-center">
+                          <p className="text-sm text-theme-muted p-4 text-center">
                             Failed to load episodes
                           </p>
                         )}
@@ -549,7 +549,7 @@ export const ShowDetail: React.FC = () => {
 
           {show.trailer_key && (
             <section className="dense-card">
-              <h2 className="text-sm font-semibold text-[#ededed] uppercase tracking-wider mb-3">
+              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
                 Trailer
               </h2>
               <div className="aspect-video rounded-lg overflow-hidden bg-black">
@@ -568,14 +568,14 @@ export const ShowDetail: React.FC = () => {
         <div className="space-y-4">
           {show.genres.length > 0 && (
             <section className="dense-card">
-              <h2 className="text-sm font-semibold text-[#ededed] uppercase tracking-wider mb-3">
+              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
                 Genres
               </h2>
               <div className="flex flex-wrap gap-2">
                 {show.genres.map((genre) => (
                   <span
                     key={genre}
-                    className="px-2.5 py-1 text-xs rounded-md bg-[#1f1f1f] border border-[#27272a] text-[#a1a1aa]"
+                    className="px-2.5 py-1 text-xs rounded-md bg-theme-tertiary border border-theme text-theme-secondary"
                   >
                     {genre}
                   </span>
@@ -585,28 +585,28 @@ export const ShowDetail: React.FC = () => {
           )}
 
           <section className="dense-card space-y-3">
-            <h2 className="text-sm font-semibold text-[#ededed] uppercase tracking-wider">
+            <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider">
               Details
             </h2>
             <dl className="space-y-2 text-sm">
               {show.status && (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-[#52525b]">Status</dt>
-                  <dd className="text-[#a1a1aa] text-right">{show.status}</dd>
+                  <dt className="text-theme-muted">Status</dt>
+                  <dd className="text-theme-secondary text-right">{show.status}</dd>
                 </div>
               )}
               {show.networks.length > 0 && (
                 <div>
-                  <dt className="text-[#52525b] mb-1">Network</dt>
-                  <dd className="text-[#a1a1aa]">
+                  <dt className="text-theme-muted mb-1">Network</dt>
+                  <dd className="text-theme-secondary">
                     {show.networks.map((n) => n.name).join(", ")}
                   </dd>
                 </div>
               )}
               {show.first_air_date && (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-[#52525b]">First aired</dt>
-                  <dd className="text-[#a1a1aa] text-right">{show.first_air_date}</dd>
+                  <dt className="text-theme-muted">First aired</dt>
+                  <dd className="text-theme-secondary text-right">{show.first_air_date}</dd>
                 </div>
               )}
             </dl>

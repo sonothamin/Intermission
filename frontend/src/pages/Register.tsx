@@ -93,10 +93,10 @@ export const Register: React.FC = () => {
 
   return (
     <AuthLayout>
-      <div className="dense-card p-8 border border-[#27272a] bg-[#141414]/50 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
+      <div className="dense-card p-8 border border-theme bg-theme-secondary/50 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
         <div className="space-y-2 text-center lg:text-left">
-          <h2 className="text-2xl font-bold text-[#ededed]">Join Intermission</h2>
-          <p className="text-sm text-[#a1a1aa]">Track your watch history and analytics</p>
+          <h2 className="text-2xl font-bold text-theme-primary">Join Intermission</h2>
+          <p className="text-sm text-theme-secondary">Track your watch history and analytics</p>
         </div>
 
         {error && (
@@ -108,9 +108,9 @@ export const Register: React.FC = () => {
 
         <form onSubmit={handleRegister} className="flex flex-col gap-4">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-[#a1a1aa]">Full Name</label>
+            <label className="block text-sm font-medium text-theme-secondary">Full Name</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#52525b]">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
                 <User className="w-5 h-5" />
               </div>
               <input
@@ -118,7 +118,7 @@ export const Register: React.FC = () => {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full pl-10 bg-[#1e1e1e] border-[#27272a] focus:border-[#10b981] text-[#ededed]"
+                className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
                 placeholder="Jane Doe"
                 disabled={loading}
               />
@@ -126,9 +126,9 @@ export const Register: React.FC = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-[#a1a1aa]">Username</label>
+            <label className="block text-sm font-medium text-theme-secondary">Username</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#52525b]">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
                 <AtSign className="w-5 h-5" />
               </div>
               <input
@@ -136,7 +136,7 @@ export const Register: React.FC = () => {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-10 bg-[#1e1e1e] border-[#27272a] focus:border-[#10b981] text-[#ededed]"
+                className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
                 placeholder="janedoe"
                 disabled={loading}
               />
@@ -144,9 +144,9 @@ export const Register: React.FC = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-[#a1a1aa]">Email address</label>
+            <label className="block text-sm font-medium text-theme-secondary">Email address</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#52525b]">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
                 <Mail className="w-5 h-5" />
               </div>
               <input
@@ -154,7 +154,7 @@ export const Register: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 bg-[#1e1e1e] border-[#27272a] focus:border-[#10b981] text-[#ededed]"
+                className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
                 placeholder="you@example.com"
                 disabled={loading}
               />
@@ -162,9 +162,9 @@ export const Register: React.FC = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-[#a1a1aa]">Password</label>
+            <label className="block text-sm font-medium text-theme-secondary">Password</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#52525b]">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
                 <Lock className="w-5 h-5" />
               </div>
               <input
@@ -172,7 +172,7 @@ export const Register: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 bg-[#1e1e1e] border-[#27272a] focus:border-[#10b981] text-[#ededed]"
+                className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
                 placeholder="••••••••"
                 minLength={6}
                 disabled={loading}
@@ -181,9 +181,9 @@ export const Register: React.FC = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-[#a1a1aa]">Confirm Password</label>
+            <label className="block text-sm font-medium text-theme-secondary">Confirm Password</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#52525b]">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
                 <Lock className="w-5 h-5" />
               </div>
               <input
@@ -191,7 +191,7 @@ export const Register: React.FC = () => {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-10 bg-[#1e1e1e] border-[#27272a] focus:border-[#10b981] text-[#ededed]"
+                className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
                 placeholder="••••••••"
                 minLength={6}
                 disabled={loading}
@@ -209,9 +209,9 @@ export const Register: React.FC = () => {
         </form>
 
         <div className="flex items-center justify-between gap-4">
-          <hr className="w-full border-[#27272a]" />
-          <span className="text-xs text-[#52525b] uppercase tracking-wider whitespace-nowrap">or</span>
-          <hr className="w-full border-[#27272a]" />
+          <hr className="w-full border-theme" />
+          <span className="text-xs text-theme-muted uppercase tracking-wider whitespace-nowrap">or</span>
+          <hr className="w-full border-theme" />
         </div>
 
         <button
@@ -240,7 +240,7 @@ export const Register: React.FC = () => {
           Continue with Google
         </button>
 
-        <p className="text-center text-sm text-[#a1a1aa]">
+        <p className="text-center text-sm text-theme-secondary">
           Already have an account?{" "}
           <Link to="/login" className="text-[#10b981] hover:text-[#059669] hover:underline transition-colors font-medium">
             Sign in

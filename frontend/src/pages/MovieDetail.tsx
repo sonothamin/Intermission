@@ -108,16 +108,16 @@ export const MovieDetail: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           {movie.overview && (
             <section className="dense-card">
-              <h2 className="text-sm font-semibold text-[#ededed] uppercase tracking-wider mb-3">
+              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
                 Overview
               </h2>
-              <p className="text-[#a1a1aa] leading-relaxed">{movie.overview}</p>
+              <p className="text-theme-secondary leading-relaxed">{movie.overview}</p>
             </section>
           )}
 
           {movie.trailer_key && (
             <section className="dense-card">
-              <h2 className="text-sm font-semibold text-[#ededed] uppercase tracking-wider mb-3">
+              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
                 Trailer
               </h2>
               <div className="aspect-video rounded-lg overflow-hidden bg-black">
@@ -136,14 +136,14 @@ export const MovieDetail: React.FC = () => {
         <div className="space-y-4">
           {movie.genres.length > 0 && (
             <section className="dense-card">
-              <h2 className="text-sm font-semibold text-[#ededed] uppercase tracking-wider mb-3">
+              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
                 Genres
               </h2>
               <div className="flex flex-wrap gap-2">
                 {movie.genres.map((genre) => (
                   <span
                     key={genre}
-                    className="px-2.5 py-1 text-xs rounded-md bg-[#1f1f1f] border border-[#27272a] text-[#a1a1aa]"
+                    className="px-2.5 py-1 text-xs rounded-md bg-theme-tertiary border border-theme text-theme-secondary"
                   >
                     {genre}
                   </span>
@@ -153,32 +153,32 @@ export const MovieDetail: React.FC = () => {
           )}
 
           <section className="dense-card space-y-3">
-            <h2 className="text-sm font-semibold text-[#ededed] uppercase tracking-wider">
+            <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider">
               Details
             </h2>
             <dl className="space-y-2 text-sm">
               {movie.status && (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-[#52525b]">Status</dt>
-                  <dd className="text-[#a1a1aa] text-right">{movie.status}</dd>
+                  <dt className="text-theme-muted">Status</dt>
+                  <dd className="text-theme-secondary text-right">{movie.status}</dd>
                 </div>
               )}
               {movie.release_date && (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-[#52525b]">Release</dt>
-                  <dd className="text-[#a1a1aa] text-right">{movie.release_date}</dd>
+                  <dt className="text-theme-muted">Release</dt>
+                  <dd className="text-theme-secondary text-right">{movie.release_date}</dd>
                 </div>
               )}
               {movie.original_title !== movie.title && (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-[#52525b]">Original</dt>
-                  <dd className="text-[#a1a1aa] text-right">{movie.original_title}</dd>
+                  <dt className="text-theme-muted">Original</dt>
+                  <dd className="text-theme-secondary text-right">{movie.original_title}</dd>
                 </div>
               )}
               {movie.production_companies.length > 0 && (
                 <div>
-                  <dt className="text-[#52525b] mb-1">Production</dt>
-                  <dd className="text-[#a1a1aa]">
+                  <dt className="text-theme-muted mb-1">Production</dt>
+                  <dd className="text-theme-secondary">
                     {movie.production_companies.map((c) => c.name).join(", ")}
                   </dd>
                 </div>

@@ -31,10 +31,10 @@ export const ForgotPassword: React.FC = () => {
 
   return (
     <AuthLayout>
-      <div className="dense-card p-8 border border-[#27272a] bg-[#141414]/50 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
+      <div className="dense-card p-8 border border-theme bg-theme-secondary/50 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
         <div className="space-y-2 text-center lg:text-left">
-          <h2 className="text-2xl font-bold text-[#ededed]">Reset password</h2>
-          <p className="text-sm text-[#a1a1aa]">
+          <h2 className="text-2xl font-bold text-theme-primary">Reset password</h2>
+          <p className="text-sm text-theme-secondary">
             Enter your email and we'll send you instructions to reset your password.
           </p>
         </div>
@@ -51,9 +51,9 @@ export const ForgotPassword: React.FC = () => {
             <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-3 text-emerald-400 text-sm text-left">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-[#ededed] mb-1">Check your email</p>
-                <p className="text-[#a1a1aa]">
-                  We have sent a password recovery link to <span className="font-medium text-[#ededed]">{email}</span>.
+                <p className="font-semibold text-theme-primary mb-1">Check your email</p>
+                <p className="text-theme-secondary">
+                  We have sent a password recovery link to <span className="font-medium text-theme-primary">{email}</span>.
                 </p>
               </div>
             </div>
@@ -69,11 +69,11 @@ export const ForgotPassword: React.FC = () => {
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div className="space-y-1.5">
-              <label htmlFor="email" className="block text-sm font-medium text-[#a1a1aa]">
+              <label htmlFor="email" className="block text-sm font-medium text-theme-secondary">
                 Email address
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#52525b]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
                   <Mail className="w-5 h-5" />
                 </div>
                 <input
@@ -82,7 +82,7 @@ export const ForgotPassword: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 bg-[#1e1e1e] border-[#27272a] focus:border-[#10b981] text-[#ededed]"
+                  className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
                   placeholder="you@example.com"
                   disabled={loading}
                 />
@@ -100,7 +100,7 @@ export const ForgotPassword: React.FC = () => {
             <div className="pt-2 text-center">
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 text-xs text-[#a1a1aa] hover:text-[#ededed] transition-colors"
+                className="inline-flex items-center gap-2 text-xs text-theme-secondary hover:text-theme-primary transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Back to sign in

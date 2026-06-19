@@ -391,7 +391,7 @@ export const Settings: React.FC = () => {
     <div className="max-w-3xl mx-auto space-y-8 pb-12">
       <div>
         <h1 className="text-2xl font-bold tracking-tight mb-2">Settings</h1>
-        <p className="text-[#a1a1aa] text-sm">Manage your account preferences and profile.</p>
+        <p className="text-theme-secondary text-sm">Manage your account preferences and profile.</p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-8">
@@ -407,17 +407,17 @@ export const Settings: React.FC = () => {
               className="hidden"
             />
             <div
-              className="relative group w-16 h-16 rounded-full overflow-hidden bg-[#27272a] flex items-center justify-center flex-shrink-0 border border-[#27272a] cursor-pointer shadow-md"
+              className="relative group w-16 h-16 rounded-full overflow-hidden bg-theme-tertiary flex items-center justify-center flex-shrink-0 border border-theme cursor-pointer shadow-md"
               onClick={() => avatarInputRef.current?.click()}
               title="Click to change avatar"
             >
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
               ) : (
-                <UserIcon className="w-8 h-8 text-[#52525b] group-hover:text-[#ededed] transition-colors" />
+                <UserIcon className="w-8 h-8 text-theme-muted group-hover:text-theme-primary transition-colors" />
               )}
               {avatarLoading && (
-                <div className="absolute inset-0 bg-[#0a0a0a]/75 flex items-center justify-center">
+                <div className="absolute inset-0 bg-theme-primary/75 flex items-center justify-center">
                   <Loader2 className="w-5 h-5 text-[#10b981] animate-spin" />
                 </div>
               )}
@@ -440,7 +440,7 @@ export const Settings: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#a1a1aa] mb-1">Display Name</label>
+              <label className="block text-sm font-medium text-theme-secondary mb-1">Display Name</label>
               <input
                 type="text"
                 value={displayName}
@@ -450,7 +450,7 @@ export const Settings: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#a1a1aa] mb-1">Username</label>
+              <label className="block text-sm font-medium text-theme-secondary mb-1">Username</label>
               <input
                 type="text"
                 value={username}
@@ -462,7 +462,7 @@ export const Settings: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#a1a1aa] mb-1">Bio</label>
+            <label className="block text-sm font-medium text-theme-secondary mb-1">Bio</label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
@@ -474,15 +474,15 @@ export const Settings: React.FC = () => {
 
         {/* Preferences Section */}
         <section className="dense-card space-y-6">
-          <h2 className="font-semibold text-lg border-b border-[#27272a] pb-2">Preferences</h2>
+          <h2 className="font-semibold text-lg border-b border-theme pb-2">Preferences</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-[#a1a1aa] mb-1">Theme</label>
+              <label className="block text-sm font-medium text-theme-secondary mb-1">Theme</label>
               <CustomSelect 
                 value={theme}
                 onChange={(val) => setThemeLocal(val as "dark" | "light" | "system")}
-                className="w-full bg-[#141414] border border-[#27272a] rounded"
+                className="w-full bg-theme-secondary border border-theme rounded"
                 buttonClassName="px-3 py-2"
                 options={[
                   { value: "dark", label: "Dark" },
@@ -514,15 +514,15 @@ export const Settings: React.FC = () => {
 
         <div className="flex flex-col border-b border-red-500/10 pb-6 gap-6">
           <div>
-            <h3 className="font-medium text-[#ededed]">Export Your Data</h3>
-            <p className="text-sm text-[#a1a1aa] mt-1 mb-4">Download a copy of your tracking history, reviews, and settings.</p>
+            <h3 className="font-medium text-theme-primary">Export Your Data</h3>
+            <p className="text-sm text-theme-secondary mt-1 mb-4">Download a copy of your tracking history, reviews, and settings.</p>
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
               <div className="flex-1">
-                <label className="block text-xs font-medium text-[#a1a1aa] mb-1">Content</label>
+                <label className="block text-xs font-medium text-theme-secondary mb-1">Content</label>
                 <CustomSelect
                   value={exportContent}
                   onChange={(val) => setExportContent(val as any)}
-                  className="w-full bg-[#141414] border border-[#27272a] rounded"
+                  className="w-full bg-theme-secondary border border-theme rounded"
                   buttonClassName="px-3 py-2 text-sm"
                   options={[
                     { value: "full", label: "Full Profile Config" },
@@ -533,11 +533,11 @@ export const Settings: React.FC = () => {
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-[#a1a1aa] mb-1">Format</label>
+                <label className="block text-xs font-medium text-theme-secondary mb-1">Format</label>
                 <CustomSelect
                   value={exportFormat}
                   onChange={(val) => setExportFormat(val as any)}
-                  className="w-full bg-[#141414] border border-[#27272a] rounded"
+                  className="w-full bg-theme-secondary border border-theme rounded"
                   buttonClassName="px-3 py-2 text-sm"
                   options={[
                     { value: "json", label: "JSON" },
@@ -556,10 +556,10 @@ export const Settings: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-red-500/10 pb-6">
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-medium text-[#ededed]">Import Data</h3>
+              <h3 className="font-medium text-theme-primary">Import Data</h3>
               <ImportFormatHelp />
             </div>
-            <p className="text-sm text-[#a1a1aa] mt-1">
+            <p className="text-sm text-theme-secondary mt-1">
               Upload a JSON or CSV backup. Supports Intermission JSON exports and custom CSV with TMDB IDs.
             </p>
             {importResult && (
@@ -602,8 +602,8 @@ export const Settings: React.FC = () => {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h3 className="font-medium text-[#ededed]">Delete Account</h3>
-            <p className="text-sm text-[#a1a1aa] mt-1">Permanently delete your account and all associated data. This action cannot be undone.</p>
+            <h3 className="font-medium text-theme-primary">Delete Account</h3>
+            <p className="text-sm text-theme-secondary mt-1">Permanently delete your account and all associated data. This action cannot be undone.</p>
           </div>
           <button
             onClick={() => setShowDeleteConfirm(true)}
@@ -615,10 +615,10 @@ export const Settings: React.FC = () => {
       </section>
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-[#0a0a0a]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#141414] border border-red-500/30 rounded-lg max-w-sm w-full shadow-2xl p-6">
-            <h3 className="text-lg font-semibold text-[#ededed] mb-2">Delete Account</h3>
-            <p className="text-sm text-[#a1a1aa] mb-6">
+        <div className="fixed inset-0 bg-theme-primary/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-theme-secondary border border-red-500/30 rounded-lg max-w-sm w-full shadow-2xl p-6">
+            <h3 className="text-lg font-semibold text-theme-primary mb-2">Delete Account</h3>
+            <p className="text-sm text-theme-secondary mb-6">
               This will permanently delete your account, library, watchlist, and all episode progress. <strong className="text-red-400">This cannot be undone.</strong>
             </p>
             <div className="flex gap-3 justify-end">
@@ -643,13 +643,13 @@ export const Settings: React.FC = () => {
       )}
 
       {showPreviewModal && parsedImportData && (
-        <div className="fixed inset-0 bg-[#0a0a0a]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#141414] border border-[#27272a] rounded-lg max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-4 border-b border-[#27272a]">
-              <h3 className="text-lg font-semibold text-[#ededed]">Review Import Data</h3>
+        <div className="fixed inset-0 bg-theme-primary/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-theme-secondary border border-theme rounded-lg max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-theme">
+              <h3 className="text-lg font-semibold text-theme-primary">Review Import Data</h3>
               <button
                 onClick={() => { if (!bulkImporting) setShowPreviewModal(false); }}
-                className="text-[#52525b] hover:text-[#ededed] transition-colors"
+                className="text-theme-muted hover:text-theme-primary transition-colors"
                 disabled={bulkImporting}
               >
                 <X className="w-5 h-5" />
@@ -658,32 +658,32 @@ export const Settings: React.FC = () => {
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="bg-[#1f1f1f] border border-[#27272a] rounded-lg p-3">
-                  <div className="text-2xl font-bold text-[#ededed]">{parsedImportData.totalEntries}</div>
-                  <div className="text-xs text-[#a1a1aa] mt-1">Total Entries</div>
+                <div className="bg-theme-tertiary border border-theme rounded-lg p-3">
+                  <div className="text-2xl font-bold text-theme-primary">{parsedImportData.totalEntries}</div>
+                  <div className="text-xs text-theme-secondary mt-1">Total Entries</div>
                 </div>
-                <div className="bg-[#1f1f1f] border border-emerald-500/10 rounded-lg p-3">
+                <div className="bg-theme-tertiary border border-emerald-500/10 rounded-lg p-3">
                   <div className="text-2xl font-bold text-[#10b981]">{parsedImportData.parsed.length}</div>
                   <div className="text-xs text-emerald-400 mt-1">Parsed (Valid)</div>
                 </div>
-                <div className="bg-[#1f1f1f] border border-red-500/10 rounded-lg p-3">
+                <div className="bg-theme-tertiary border border-red-500/10 rounded-lg p-3">
                   <div className="text-2xl font-bold text-red-500">{parsedImportData.skipped.length}</div>
                   <div className="text-xs text-red-400 mt-1">Skipped (Invalid)</div>
                 </div>
               </div>
 
-              <div className="border border-[#27272a] rounded-lg overflow-hidden bg-[#0a0a0a]">
+              <div className="border border-theme rounded-lg overflow-hidden bg-theme-primary">
                 <div className="max-h-[300px] overflow-y-auto">
                   <table className="w-full border-collapse text-left text-xs">
-                    <thead className="bg-[#141414] border-b border-[#27272a] sticky top-0 z-10">
+                    <thead className="bg-theme-secondary border-b border-theme sticky top-0 z-10">
                       <tr>
-                        <th className="p-3 text-[#52525b] font-semibold uppercase">Type</th>
-                        <th className="p-3 text-[#52525b] font-semibold uppercase">Title / ID</th>
-                        <th className="p-3 text-[#52525b] font-semibold uppercase">Status</th>
-                        <th className="p-3 text-[#52525b] font-semibold uppercase">Import Status</th>
+                        <th className="p-3 text-theme-muted font-semibold uppercase">Type</th>
+                        <th className="p-3 text-theme-muted font-semibold uppercase">Title / ID</th>
+                        <th className="p-3 text-theme-muted font-semibold uppercase">Status</th>
+                        <th className="p-3 text-theme-muted font-semibold uppercase">Import Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#27272a]/50">
+                    <tbody className="divide-y divide-[var(--border-subtle)]/50">
                       {parsedImportData.parsed.map((item, idx) => (
                         <tr key={`parsed-${idx}`} className="bg-emerald-950/5 hover:bg-emerald-950/10 transition-colors">
                           <td className="p-3">
@@ -691,16 +691,16 @@ export const Settings: React.FC = () => {
                               {item.media_type} {item.is_episode ? 'ep' : ''}
                             </span>
                           </td>
-                          <td className="p-3 font-medium text-[#ededed]">
+                          <td className="p-3 font-medium text-theme-primary">
                             {item.title || `TMDB: ${item.tmdb_id}`}
                             {item.is_episode && (
-                              <span className="text-[#a1a1aa] block text-[10px] mt-0.5">
+                              <span className="text-theme-secondary block text-[10px] mt-0.5">
                                 Season {item.season_number} Episode {item.episode_number}
                               </span>
                             )}
                           </td>
                           <td className="p-3">
-                            <span className="text-[#a1a1aa]">
+                            <span className="text-theme-secondary">
                               {item.status.replace(/_/g, ' ')}
                               {item.rating ? ` (${item.rating}/10)` : ''}
                             </span>
@@ -717,7 +717,7 @@ export const Settings: React.FC = () => {
                                 {item.media_type}
                               </span>
                             ) : (
-                              <span className="text-[#52525b]">—</span>
+                              <span className="text-theme-muted">—</span>
                             )}
                           </td>
                           <td className="p-3 font-medium text-red-300 truncate max-w-xs" title={item.raw}>
@@ -727,7 +727,7 @@ export const Settings: React.FC = () => {
                             {item.status ? (
                               <span className="text-red-400">{item.status.replace(/_/g, ' ')}</span>
                             ) : (
-                              <span className="text-[#52525b]">—</span>
+                              <span className="text-theme-muted">—</span>
                             )}
                           </td>
                           <td className="p-3 text-red-400 font-medium" title={item.reason}>
@@ -743,12 +743,12 @@ export const Settings: React.FC = () => {
               {bulkImporting && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#a1a1aa]">Importing items...</span>
-                    <span className="text-[#ededed] font-semibold">
+                    <span className="text-theme-secondary">Importing items...</span>
+                    <span className="text-theme-primary font-semibold">
                       {importProgress} / {parsedImportData.parsed.length} ({Math.round((importProgress / parsedImportData.parsed.length) * 100)}%)
                     </span>
                   </div>
-                  <div className="w-full bg-[#1f1f1f] h-2.5 rounded-full overflow-hidden border border-[#27272a]">
+                  <div className="w-full bg-theme-tertiary h-2.5 rounded-full overflow-hidden border border-theme">
                     <div
                       className="bg-[#10b981] h-full rounded-full transition-all duration-300"
                       style={{ width: `${(importProgress / parsedImportData.parsed.length) * 100}%` }}
@@ -758,7 +758,7 @@ export const Settings: React.FC = () => {
               )}
             </div>
 
-            <div className="p-4 border-t border-[#27272a] bg-[#141414] flex justify-end gap-3">
+            <div className="p-4 border-t border-theme bg-theme-secondary flex justify-end gap-3">
               <button
                 onClick={() => setShowPreviewModal(false)}
                 className="btn-secondary text-sm"

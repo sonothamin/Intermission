@@ -116,7 +116,7 @@ export const MediaActions: React.FC<MediaActionsProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-[#a1a1aa]">
+      <div className="flex items-center gap-2 text-theme-secondary">
         <Loader2 className="w-4 h-4 animate-spin" />
         <span className="text-sm">Updating...</span>
       </div>
@@ -158,7 +158,7 @@ export const MediaActions: React.FC<MediaActionsProps> = ({
         <CustomSelect
           value={userEntry.status}
           onChange={(val) => handleStatusChange(val as WatchStatus)}
-          className="text-sm bg-[#1f1f1f] border border-[#27272a] rounded-md"
+          className="text-sm bg-theme-tertiary border border-theme rounded-md"
           buttonClassName="px-3 py-1.5"
           options={[
             { value: "watching", label: "Watching" },
@@ -170,7 +170,7 @@ export const MediaActions: React.FC<MediaActionsProps> = ({
           ]}
         />
 
-        <div className="flex items-center gap-1.5 bg-[#1f1f1f] border border-[#27272a] rounded-md px-2">
+        <div className="flex items-center gap-1.5 bg-theme-tertiary border border-theme rounded-md px-2">
           <Star className="w-3.5 h-3.5 text-amber-500" />
           <CustomSelect
             value={userEntry.rating ?? ""}
@@ -187,13 +187,13 @@ export const MediaActions: React.FC<MediaActionsProps> = ({
 
         <button
           onClick={handleRemove}
-          className="text-sm text-[#a1a1aa] hover:text-red-400 px-3 py-2 rounded-md hover:bg-red-400/10 transition-colors"
+          className="text-sm text-theme-secondary hover:text-red-400 px-3 py-2 rounded-md hover:bg-red-400/10 transition-colors"
         >
           Remove
         </button>
       </div>
 
-      <p className="text-xs text-[#52525b]">
+      <p className="text-xs text-theme-muted">
         In your library · {formatStatus(userEntry.status)}
         {userEntry.rating ? ` · Rated ${userEntry.rating}/10` : ""}
       </p>

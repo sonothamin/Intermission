@@ -88,16 +88,16 @@ export const Search: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight">Search Media</h1>
-        <p className="text-[#a1a1aa] text-sm">Find movies and TV shows to add to your library.</p>
+        <p className="text-theme-secondary text-sm">Find movies and TV shows to add to your library.</p>
       </div>
 
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <SearchIcon className="h-5 w-5 text-[#52525b]" />
+          <SearchIcon className="h-5 w-5 text-theme-muted" />
         </div>
         <input
           type="text"
-          className="w-full pl-10 py-3 bg-[#141414] border border-[#27272a] rounded-lg text-[#ededed] placeholder-[#52525b] focus:border-[#10b981] transition-colors outline-none text-lg"
+          className="w-full pl-10 py-3 bg-theme-secondary border border-theme rounded-lg text-theme-primary placeholder:text-theme-muted focus:border-[#10b981] transition-colors outline-none text-lg"
           placeholder="Search for Inception, Breaking Bad..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -111,14 +111,14 @@ export const Search: React.FC = () => {
 
       <div className="space-y-4">
         {debouncedQuery === "" && results.length > 0 && (
-          <h2 className="text-sm font-semibold text-[#a1a1aa] uppercase tracking-wider mb-4">Trending Today</h2>
+          <h2 className="text-sm font-semibold text-theme-secondary uppercase tracking-wider mb-4">Trending Today</h2>
         )}
         
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {results.map((item) => (
-            <div key={`${item.media_type}-${item.tmdb_id}`} className="dense-card flex flex-col group hover:border-[#3f3f46] transition-colors p-3">
+            <div key={`${item.media_type}-${item.tmdb_id}`} className="dense-card flex flex-col group hover:border-theme-focus transition-colors p-3">
               <Link to={mediaPath(item.media_type, item.tmdb_id)} className="block">
-                <div className="aspect-[2/3] w-full bg-[#27272a] rounded overflow-hidden relative mb-3">
+                <div className="aspect-[2/3] w-full bg-theme-tertiary rounded overflow-hidden relative mb-3">
                   {item.poster_url ? (
                     <img 
                       src={item.poster_url} 
@@ -128,7 +128,7 @@ export const Search: React.FC = () => {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Film className="w-12 h-12 text-[#52525b]" />
+                      <Film className="w-12 h-12 text-theme-muted" />
                     </div>
                   )}
                   
@@ -141,15 +141,15 @@ export const Search: React.FC = () => {
                   </div>
                 </div>
 
-                <h3 className="font-semibold text-[#ededed] leading-tight mb-1 line-clamp-2 group-hover:text-[#10b981] transition-colors" title={item.title}>
+                <h3 className="font-semibold text-theme-primary leading-tight mb-1 line-clamp-2 group-hover:text-[#10b981] transition-colors" title={item.title}>
                   {item.title}
                 </h3>
-                <p className="text-xs text-[#a1a1aa] mb-3">
+                <p className="text-xs text-theme-secondary mb-3">
                   {item.release_year || "Unknown Year"} • {item.vote_average ? `${item.vote_average.toFixed(1)}/10` : "Unrated"}
                 </p>
               </Link>
 
-                <div className="mt-auto pt-3 border-t border-[#27272a] flex gap-2">
+                <div className="mt-auto pt-3 border-t border-theme flex gap-2">
                   {item.user_status ? (
                     <div className="flex-1 py-1.5 text-center bg-[#10b981]/10 text-[#10b981] rounded text-xs font-medium border border-[#10b981]/20">
                       In Library ({item.user_status.status.replace("_", " ")})
@@ -158,7 +158,7 @@ export const Search: React.FC = () => {
                     <button
                       onClick={() => handleAddToLibrary(item)}
                       disabled={actionLoading === item.tmdb_id}
-                      className="flex-1 py-1.5 flex items-center justify-center gap-1 bg-[#27272a] hover:bg-[#10b981] hover:text-black text-[#ededed] text-xs font-medium rounded transition-colors"
+                      className="flex-1 py-1.5 flex items-center justify-center gap-1 bg-theme-tertiary hover:bg-[#10b981] hover:text-black text-theme-primary text-xs font-medium rounded transition-colors"
                     >
                       {actionLoading === item.tmdb_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                       Library
@@ -169,7 +169,7 @@ export const Search: React.FC = () => {
                     <button
                       onClick={() => handleAddToWatchlist(item)}
                       disabled={actionLoading === item.tmdb_id}
-                      className="py-1.5 px-3 flex items-center justify-center bg-[#27272a] hover:bg-[#3f3f46] text-[#ededed] rounded transition-colors"
+                      className="py-1.5 px-3 flex items-center justify-center bg-theme-tertiary hover:bg-theme-tertiary text-theme-primary rounded transition-colors"
                       title="Add to Watchlist"
                     >
                       <ListPlus className="w-3.5 h-3.5" />
@@ -187,7 +187,7 @@ export const Search: React.FC = () => {
         </div>
         
         {!loading && debouncedQuery !== "" && results.length === 0 && (
-          <div className="text-center py-12 text-[#a1a1aa]">
+          <div className="text-center py-12 text-theme-secondary">
             No results found for "{debouncedQuery}"
           </div>
         )}

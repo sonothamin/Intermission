@@ -7,23 +7,38 @@ interface AuthLayoutProps {
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-[#0a0a0a]">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-theme-primary">
       {/* Left Pane: Minimal Branding */}
-      <div className="hidden lg:flex flex-col items-center justify-center bg-gradient-to-br from-[#141414] via-[#0d0d0d] to-[#0a0a0a] border-r border-[#27272a] relative overflow-hidden p-12">
+      <div
+        className="hidden lg:flex flex-col items-center justify-center border-r border-theme relative overflow-hidden p-12"
+        style={{
+          background: "linear-gradient(to bottom right, var(--auth-panel-from), var(--auth-panel-via), var(--auth-panel-to))",
+        }}
+      >
         {/* Glow Effects */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#10b981]/5 filter blur-[100px] rounded-full pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#10b981]/3 filter blur-[120px] rounded-full pointer-events-none" />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center gap-6 text-center select-none animate-fade-in">
-          <div className="p-5 rounded-2xl bg-gradient-to-b from-[#1a1a1a] to-[#121212] border border-[#27272a] shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 group">
+          <div
+            className="p-5 rounded-2xl border border-theme shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 group"
+            style={{
+              background: "linear-gradient(to bottom, var(--auth-card-from), var(--auth-card-to))",
+            }}
+          >
             <Film className="w-16 h-16 text-[#10b981] transition-transform duration-500 group-hover:rotate-12" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-[#ffffff] to-[#a1a1aa]">
+            <h1
+              className="text-5xl font-extrabold tracking-tight bg-clip-text text-transparent"
+              style={{
+                backgroundImage: "linear-gradient(to bottom, var(--auth-title-gradient-from), var(--auth-title-gradient-to))",
+              }}
+            >
               Intermission
             </h1>
-            <p className="text-sm text-[#52525b] tracking-widest uppercase font-semibold">
+            <p className="text-sm text-theme-muted tracking-widest uppercase font-semibold">
               Your Cinema Journey
             </p>
           </div>
@@ -35,10 +50,15 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
         <div className="w-full max-w-md space-y-8 py-8">
           {/* Mobile-only Branding Header */}
           <div className="lg:hidden flex flex-col items-center gap-3 text-center mb-8">
-            <div className="p-3.5 rounded-xl bg-gradient-to-b from-[#1a1a1a] to-[#121212] border border-[#27272a] shadow-lg">
+            <div
+              className="p-3.5 rounded-xl border border-theme shadow-lg"
+              style={{
+                background: "linear-gradient(to bottom, var(--auth-card-from), var(--auth-card-to))",
+              }}
+            >
               <Film className="w-8 h-8 text-[#10b981]" />
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#ededed]">
+            <h1 className="text-3xl font-extrabold tracking-tight text-theme-primary">
               Intermission
             </h1>
           </div>

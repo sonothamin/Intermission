@@ -9,6 +9,13 @@ import { analyticsApi, Analytics, libraryApi, LibraryItem } from "../lib/api";
 import { mediaPath } from "../lib/media";
 import { Clock, Film, Tv, Activity, Trophy, Library } from "lucide-react";
 import { CustomSelect } from "../components/CustomSelect";
+import {
+  chartAxisStroke,
+  chartCursorFill,
+  chartGridStroke,
+  chartTooltipItemStyle,
+  chartTooltipStyle,
+} from "../lib/chartTheme";
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#6366f1"];
 
@@ -60,7 +67,7 @@ export const Dashboard: React.FC = () => {
   }, [fetchData]);
 
   if (loading && !data) {
-    return <div className="text-[#a1a1aa] flex items-center justify-center h-64">Loading dashboard...</div>;
+    return <div className="text-theme-secondary flex items-center justify-center h-64">Loading dashboard...</div>;
   }
 
   if (!data) {
@@ -84,7 +91,7 @@ export const Dashboard: React.FC = () => {
           <CustomSelect
             value={period}
             onChange={(val) => setPeriod(val as Period)}
-            className="bg-[#141414] border border-[#27272a] text-sm rounded"
+            className="bg-theme-secondary border border-theme text-sm rounded"
             buttonClassName="px-3 py-1.5"
             align="right"
             options={[
@@ -103,12 +110,12 @@ export const Dashboard: React.FC = () => {
             <Clock className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-[#a1a1aa]">Total Watch Time</p>
+            <p className="text-sm font-medium text-theme-secondary">Total Watch Time</p>
             <h3 className="text-2xl font-bold">
               {summary.total_hours_watched.toFixed(1)}{" "}
-              <span className="text-sm font-normal text-[#a1a1aa]">hrs</span>
+              <span className="text-sm font-normal text-theme-secondary">hrs</span>
             </h3>
-            <p className="text-xs text-[#52525b] mt-0.5">
+            <p className="text-xs text-theme-muted mt-0.5">
               {summary.movie_hours.toFixed(1)}h movies · {summary.tv_hours.toFixed(1)}h TV
             </p>
           </div>
@@ -119,9 +126,9 @@ export const Dashboard: React.FC = () => {
             <Film className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-[#a1a1aa]">Movies Watched</p>
+            <p className="text-sm font-medium text-theme-secondary">Movies Watched</p>
             <h3 className="text-2xl font-bold">{summary.movies_watched}</h3>
-            <p className="text-xs text-[#52525b] mt-0.5">
+            <p className="text-xs text-theme-muted mt-0.5">
               {summary.total_movies} in library
             </p>
           </div>
@@ -132,9 +139,9 @@ export const Dashboard: React.FC = () => {
             <Tv className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-[#a1a1aa]">Episodes Watched</p>
+            <p className="text-sm font-medium text-theme-secondary">Episodes Watched</p>
             <h3 className="text-2xl font-bold">{summary.episodes_watched}</h3>
-            <p className="text-xs text-[#52525b] mt-0.5">
+            <p className="text-xs text-theme-muted mt-0.5">
               {summary.series_tracked} series tracked
             </p>
           </div>
@@ -145,9 +152,9 @@ export const Dashboard: React.FC = () => {
             <Library className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-[#a1a1aa]">Library Total</p>
+            <p className="text-sm font-medium text-theme-secondary">Library Total</p>
             <h3 className="text-2xl font-bold">{summary.total_items}</h3>
-            <p className="text-xs text-[#52525b] mt-0.5">
+            <p className="text-xs text-theme-muted mt-0.5">
               {summary.watchlist_count} on watchlist
             </p>
           </div>
@@ -157,7 +164,7 @@ export const Dashboard: React.FC = () => {
       {/* Middle Row: Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="dense-card lg:col-span-2 flex flex-col h-80">
-          <h3 className="text-sm font-semibold text-[#ededed] mb-4 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-theme-primary mb-4 flex items-center gap-2">
             <Activity className="w-4 h-4 text-[#10b981]" />
             Watch Habits
           </h3>
@@ -165,25 +172,25 @@ export const Dashboard: React.FC = () => {
             {monthly_activity?.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={monthly_activity} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                  <XAxis dataKey="month" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} vertical={false} />
+                  <XAxis dataKey="month" stroke={chartAxisStroke} fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke={chartAxisStroke} fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#141414", border: "1px solid #27272a", borderRadius: "8px" }}
-                    itemStyle={{ color: "#ededed" }}
+                    contentStyle={chartTooltipStyle}
+                    itemStyle={chartTooltipItemStyle}
                   />
                   <Line type="monotone" dataKey="movies" name="Movies" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                   <Line type="monotone" dataKey="episodes" name="Episodes" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-[#52525b] text-sm">Mark items completed or log episodes to see activity.</div>
+              <div className="h-full flex items-center justify-center text-theme-muted text-sm">Mark items completed or log episodes to see activity.</div>
             )}
           </div>
         </div>
 
         <div className="dense-card flex flex-col h-80">
-          <h3 className="text-sm font-semibold text-[#ededed] mb-4">Top Genres</h3>
+          <h3 className="text-sm font-semibold text-theme-primary mb-4">Top Genres</h3>
           <div className="flex-1 min-h-0 relative">
             {genres?.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -202,18 +209,18 @@ export const Dashboard: React.FC = () => {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#141414", border: "1px solid #27272a", borderRadius: "8px" }}
-                    itemStyle={{ color: "#ededed" }}
+                    contentStyle={chartTooltipStyle}
+                    itemStyle={chartTooltipItemStyle}
                   />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-[#52525b] text-sm">No genre data yet.</div>
+              <div className="h-full flex items-center justify-center text-theme-muted text-sm">No genre data yet.</div>
             )}
             {genres?.length > 0 && (
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                <span className="text-xs text-[#a1a1aa] block mb-0.5">Top</span>
-                <span className="font-bold text-sm text-[#ededed] block truncate w-20">{genres[0].name}</span>
+                <span className="text-xs text-theme-secondary block mb-0.5">Top</span>
+                <span className="font-bold text-sm text-theme-primary block truncate w-20">{genres[0].name}</span>
               </div>
             )}
           </div>
@@ -224,7 +231,7 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Language Pie Chart */}
         <div className="dense-card flex flex-col h-80">
-          <h3 className="text-sm font-semibold text-[#ededed] mb-4">Top Languages (by count)</h3>
+          <h3 className="text-sm font-semibold text-theme-primary mb-4">Top Languages (by count)</h3>
           <div className="flex-1 min-h-0 relative">
             {data?.languages?.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -242,17 +249,17 @@ export const Dashboard: React.FC = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: "#141414", border: "1px solid #27272a", borderRadius: "8px" }}
-                    itemStyle={{ color: "#ededed" }} />
+                  <Tooltip contentStyle={chartTooltipStyle}
+                    itemStyle={chartTooltipItemStyle} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-[#52525b] text-sm">No language data yet.</div>
+              <div className="h-full flex items-center justify-center text-theme-muted text-sm">No language data yet.</div>
             )}
             {data?.languages?.length > 0 && (
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                <span className="text-xs text-[#a1a1aa] block mb-0.5">Top</span>
-                <span className="font-bold text-sm text-[#ededed] block truncate w-20">{data.languages[0].code.toUpperCase()}</span>
+                <span className="text-xs text-theme-secondary block mb-0.5">Top</span>
+                <span className="font-bold text-sm text-theme-primary block truncate w-20">{data.languages[0].code.toUpperCase()}</span>
               </div>
             )}
           </div>
@@ -260,21 +267,21 @@ export const Dashboard: React.FC = () => {
 
         {/* Minutes per Language Bar Chart */}
         <div className="dense-card flex flex-col h-80">
-          <h3 className="text-sm font-semibold text-[#ededed] mb-4">Minutes Watched by Language</h3>
+          <h3 className="text-sm font-semibold text-theme-primary mb-4">Minutes Watched by Language</h3>
           <div className="flex-1 min-h-0">
             {data?.languages?.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.languages} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                  <XAxis type="number" stroke="#a1a1aa" />
-                  <YAxis dataKey="code" type="category" stroke="#a1a1aa" width={80} />
-                  <Tooltip contentStyle={{ backgroundColor: "#141414", border: "1px solid #27272a", borderRadius: "8px" }}
-                    itemStyle={{ color: "#ededed" }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                  <XAxis type="number" stroke={chartAxisStroke} />
+                  <YAxis dataKey="code" type="category" stroke={chartAxisStroke} width={80} />
+                  <Tooltip contentStyle={chartTooltipStyle}
+                    itemStyle={chartTooltipItemStyle} />
                   <Bar dataKey="minutes" fill="#10b981" />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-[#52525b] text-sm">No minute data yet.</div>
+              <div className="h-full flex items-center justify-center text-theme-muted text-sm">No minute data yet.</div>
             )}
           </div>
         </div>
@@ -284,7 +291,7 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Country Pie Chart */}
         <div className="dense-card flex flex-col h-80">
-          <h3 className="text-sm font-semibold text-[#ededed] mb-4">Top Regions (by count)</h3>
+          <h3 className="text-sm font-semibold text-theme-primary mb-4">Top Regions (by count)</h3>
           <div className="flex-1 min-h-0 relative">
             {countriesWithFlags.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -294,17 +301,17 @@ export const Dashboard: React.FC = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: "#141414", border: "1px solid #27272a", borderRadius: "8px" }}
-                           itemStyle={{ color: "#ededed" }} />
+                  <Tooltip contentStyle={chartTooltipStyle}
+                           itemStyle={chartTooltipItemStyle} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-[#52525b] text-sm">No region data yet.</div>
+              <div className="h-full flex items-center justify-center text-theme-muted text-sm">No region data yet.</div>
             )}
             {countriesWithFlags.length > 0 && (
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                <span className="text-xs text-[#a1a1aa] block mb-0.5">Top</span>
-                <span className="font-bold text-sm text-[#ededed] block truncate w-24">
+                <span className="text-xs text-theme-secondary block mb-0.5">Top</span>
+                <span className="font-bold text-sm text-theme-primary block truncate w-24">
                   {countriesWithFlags[0].code}
                 </span>
               </div>
@@ -314,21 +321,21 @@ export const Dashboard: React.FC = () => {
 
         {/* Minutes per Region Bar Chart */}
         <div className="dense-card flex flex-col h-80">
-          <h3 className="text-sm font-semibold text-[#ededed] mb-4">Minutes Watched by Region</h3>
+          <h3 className="text-sm font-semibold text-theme-primary mb-4">Minutes Watched by Region</h3>
           <div className="flex-1 min-h-0">
             {countriesWithFlags.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={countriesWithFlags} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                  <XAxis type="number" stroke="#a1a1aa" />
-                  <YAxis dataKey="code" type="category" stroke="#a1a1aa" width={80} />
-                  <Tooltip contentStyle={{ backgroundColor: "#141414", border: "1px solid #27272a", borderRadius: "8px" }}
-                           itemStyle={{ color: "#ededed" }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                  <XAxis type="number" stroke={chartAxisStroke} />
+                  <YAxis dataKey="code" type="category" stroke={chartAxisStroke} width={80} />
+                  <Tooltip contentStyle={chartTooltipStyle}
+                           itemStyle={chartTooltipItemStyle} />
                   <Bar dataKey="minutes" fill="#10b981" />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-[#52525b] text-sm">No minute data yet.</div>
+              <div className="h-full flex items-center justify-center text-theme-muted text-sm">No minute data yet.</div>
             )}
           </div>
         </div>
@@ -336,11 +343,11 @@ export const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <div className="dense-card flex flex-col h-64">
-          <h3 className="text-sm font-semibold text-[#ededed] mb-4 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-theme-primary mb-4 flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-500" />
             Rating Distribution
             {summary.avg_rating !== null && (
-              <span className="text-xs font-normal text-[#52525b] ml-auto">
+              <span className="text-xs font-normal text-theme-muted ml-auto">
                 Avg {summary.avg_rating.toFixed(1)}/10
               </span>
             )}
@@ -349,25 +356,25 @@ export const Dashboard: React.FC = () => {
             {rating_distribution?.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={rating_distribution} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                  <XAxis dataKey="score" stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#a1a1aa" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} vertical={false} />
+                  <XAxis dataKey="score" stroke={chartAxisStroke} fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke={chartAxisStroke} fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
                   <Tooltip
-                    cursor={{ fill: "#27272a" }}
-                    contentStyle={{ backgroundColor: "#141414", border: "1px solid #27272a", borderRadius: "8px" }}
+                    cursor={{ fill: chartCursorFill }}
+                    contentStyle={chartTooltipStyle}
                   />
                   <Bar dataKey="count" name="Items" fill="#10b981" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-[#52525b] text-sm">No ratings yet.</div>
+              <div className="h-full flex items-center justify-center text-theme-muted text-sm">No ratings yet.</div>
             )}
           </div>
         </div>
 
         <div className="dense-card flex flex-col h-64">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-[#ededed]">Recent Activity</h3>
+            <h3 className="text-sm font-semibold text-theme-primary">Recent Activity</h3>
             <Link to="/library" className="text-xs font-medium text-[#10b981] hover:underline">View All</Link>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto pr-2 space-y-3">
@@ -375,23 +382,23 @@ export const Dashboard: React.FC = () => {
               <Link
                 key={item.id}
                 to={mediaPath(item.media_type, item.tmdb_id)}
-                className="flex gap-3 items-center p-2 rounded hover:bg-[#1f1f1f] transition-colors group"
+                className="flex gap-3 items-center p-2 rounded hover:bg-theme-tertiary transition-colors group"
               >
-                <div className="w-10 h-14 bg-[#27272a] rounded overflow-hidden flex-shrink-0">
+                <div className="w-10 h-14 bg-theme-tertiary rounded overflow-hidden flex-shrink-0">
                   {item.poster_url ? (
                     <img src={item.poster_url} alt={item.title} className="w-full h-full object-cover" />
                   ) : (
-                    <Film className="w-4 h-4 m-auto mt-5 text-[#52525b]" />
+                    <Film className="w-4 h-4 m-auto mt-5 text-theme-muted" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-[#ededed] truncate group-hover:text-[#10b981] transition-colors">{item.title}</h4>
+                  <h4 className="text-sm font-medium text-theme-primary truncate group-hover:text-[#10b981] transition-colors">{item.title}</h4>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${item.media_type === 'movie' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
                       }`}>
                       {item.media_type}
                     </span>
-                    <span className="text-xs text-[#a1a1aa] truncate">
+                    <span className="text-xs text-theme-secondary truncate">
                       {item.status === 'watching' ? 'Currently watching' :
                         item.status === 'completed' ? `Completed · Rated ${item.rating || '-'}/10` :
                           item.status.replace('_', ' ')}
@@ -400,7 +407,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               </Link>
             )) : (
-              <div className="h-full flex items-center justify-center text-[#52525b] text-sm">Your library is empty.</div>
+              <div className="h-full flex items-center justify-center text-theme-muted text-sm">Your library is empty.</div>
             )}
           </div>
         </div>

@@ -13,6 +13,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 const SIDEBAR_KEY = "intermission-sidebar-collapsed";
 
@@ -204,6 +205,7 @@ export const Layout: React.FC = () => {
               </div>
             </div>
           )}
+          <ThemeSwitcher collapsed={collapsed} />
           <button
             onClick={handleSignOut}
             title={collapsed ? "Sign out" : undefined}

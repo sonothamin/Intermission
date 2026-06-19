@@ -372,7 +372,7 @@ function parseTraktHistory(entries: unknown[]): ClientParsedImport {
       const showId = extractTmdbId(show);
       const ep = row.episode as Record<string, unknown> | undefined;
       if (!showId || !ep) {
-        skipped.push({ raw: JSON.stringify(entry), reason: "Missing show ID or episode information", title: (show.title as string | undefined) || (ep.title as string | undefined), media_type: "tv", status: "watching" });
+        skipped.push({ raw: JSON.stringify(entry), reason: "Missing show ID or episode information", title: (show.title as string | undefined) || (ep?.title as string | undefined), media_type: "tv", status: "watching" });
         continue;
       }
       const season_number = Number(ep.season ?? ep.season_number);

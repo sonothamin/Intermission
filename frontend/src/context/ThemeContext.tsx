@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { settingsApi } from "../lib/api";
 import { useAuth } from "./AuthContext";
 
-type Theme = "dark" | "light" | "system";
+export type Theme = "dark" | "light" | "system";
 
 interface ThemeContextType {
   theme: Theme;
@@ -11,7 +11,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: "dark",
+  theme: "system",
   setTheme: () => {},
   resolvedTheme: "dark",
 });
@@ -34,7 +34,7 @@ function applyTheme(resolved: "dark" | "light") {
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [theme, setThemeState] = useState<Theme>(() => {
-    return (localStorage.getItem(THEME_KEY) as Theme) || "dark";
+    return (localStorage.getItem(THEME_KEY) as Theme) || "system";
   });
 
   const resolved = resolveTheme(theme);
@@ -67,6 +67,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setTheme = (t: Theme) => {
     setThemeState(t);
     localStorage.setItem(THEME_KEY, t);
+    if (user) {
+      settingsApi.update({ theme: t }).catch(() => {});
+    }
   };
 
   return (

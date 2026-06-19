@@ -33,16 +33,16 @@ export const MediaHero: React.FC<MediaHeroProps> = ({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-[#1f1f1f]" />
+          <div className="w-full h-full bg-theme-tertiary" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-[#0a0a0a]/30" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a]/90 via-transparent to-transparent" />
+        <div className="absolute inset-0 media-hero-overlay-t" />
+        <div className="absolute inset-0 media-hero-overlay-l" />
       </div>
 
       <div className="absolute top-4 left-4 md:left-6 z-10">
         <Link
           to={backTo}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-black/50 backdrop-blur-sm text-sm text-[#ededed] hover:bg-black/70 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-black/50 backdrop-blur-sm text-sm text-white hover:bg-black/70 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           {backLabel}
@@ -51,7 +51,7 @@ export const MediaHero: React.FC<MediaHeroProps> = ({
 
       <div className="relative px-4 md:px-6 -mt-28 md:-mt-32 flex flex-col md:flex-row gap-6">
         <div className="w-36 md:w-44 flex-shrink-0 mx-auto md:mx-0">
-          <div className="aspect-[2/3] rounded-lg overflow-hidden shadow-2xl border border-[#27272a] bg-[#27272a]">
+          <div className="aspect-[2/3] rounded-lg overflow-hidden shadow-2xl border border-theme bg-theme-tertiary">
             {posterUrl ? (
               <img
                 src={posterUrl}
@@ -60,7 +60,7 @@ export const MediaHero: React.FC<MediaHeroProps> = ({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <Film className="w-12 h-12 text-[#52525b]" />
+                <Film className="w-12 h-12 text-theme-muted" />
               </div>
             )}
           </div>
@@ -78,11 +78,11 @@ export const MediaHero: React.FC<MediaHeroProps> = ({
               {mediaType === "movie" ? "Movie" : "TV Show"}
             </span>
           </div>
-          <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-[#ededed] mb-2">
+          <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-theme-primary mb-2">
             {title}
           </h1>
           {tagline && (
-            <p className="text-[#a1a1aa] italic text-sm md:text-base mb-4">
+            <p className="text-theme-secondary italic text-sm md:text-base mb-4">
               {tagline}
             </p>
           )}
@@ -98,7 +98,7 @@ interface MetaChipProps {
 }
 
 export const MetaChip: React.FC<MetaChipProps> = ({ children }) => (
-  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#1f1f1f] border border-[#27272a] text-xs text-[#a1a1aa]">
+  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-theme-tertiary border border-theme text-xs text-theme-secondary">
     {children}
   </span>
 );

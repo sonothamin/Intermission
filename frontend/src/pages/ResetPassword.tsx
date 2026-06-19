@@ -48,10 +48,10 @@ export const ResetPassword: React.FC = () => {
 
   return (
     <AuthLayout>
-      <div className="dense-card p-8 border border-[#27272a] bg-[#141414]/50 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
+      <div className="dense-card p-8 border border-theme bg-theme-secondary/50 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
         <div className="space-y-2 text-center lg:text-left">
-          <h2 className="text-2xl font-bold text-[#ededed]">Set new password</h2>
-          <p className="text-sm text-[#a1a1aa]">
+          <h2 className="text-2xl font-bold text-theme-primary">Set new password</h2>
+          <p className="text-sm text-theme-secondary">
             Please enter your new password below.
           </p>
         </div>
@@ -67,8 +67,8 @@ export const ResetPassword: React.FC = () => {
           <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-3 text-emerald-400 text-sm text-left">
             <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-[#ededed] mb-1">Password updated successfully</p>
-              <p className="text-[#a1a1aa]">
+              <p className="font-semibold text-theme-primary mb-1">Password updated successfully</p>
+              <p className="text-theme-secondary">
                 Your password has been changed. Redirecting to login in a few seconds...
               </p>
             </div>
@@ -76,11 +76,11 @@ export const ResetPassword: React.FC = () => {
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div className="space-y-1.5">
-              <label htmlFor="password" className="block text-sm font-medium text-[#a1a1aa]">
+              <label htmlFor="password" className="block text-sm font-medium text-theme-secondary">
                 New Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#52525b]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
                   <Lock className="w-5 h-5" />
                 </div>
                 <input
@@ -89,7 +89,7 @@ export const ResetPassword: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 bg-[#1e1e1e] border-[#27272a] focus:border-[#10b981] text-[#ededed]"
+                  className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
                   placeholder="••••••••"
                   minLength={6}
                   disabled={loading}
@@ -98,11 +98,11 @@ export const ResetPassword: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#a1a1aa]">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-theme-secondary">
                 Confirm New Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#52525b]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
                   <Lock className="w-5 h-5" />
                 </div>
                 <input
@@ -111,7 +111,7 @@ export const ResetPassword: React.FC = () => {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 bg-[#1e1e1e] border-[#27272a] focus:border-[#10b981] text-[#ededed]"
+                  className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
                   placeholder="••••••••"
                   minLength={6}
                   disabled={loading}
@@ -133,7 +133,7 @@ export const ResetPassword: React.FC = () => {
           <div className="pt-2 text-center">
             <Link
               to="/login"
-              className="text-xs text-[#a1a1aa] hover:text-[#ededed] hover:underline transition-colors"
+              className="text-xs text-theme-secondary hover:text-theme-primary hover:underline transition-colors"
             >
               Back to sign in
             </Link>

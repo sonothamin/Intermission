@@ -46,10 +46,10 @@ export const Login: React.FC = () => {
 
   return (
     <AuthLayout>
-      <div className="dense-card p-8 border border-[#27272a] bg-[#141414]/50 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
+      <div className="dense-card p-8 border border-theme bg-theme-secondary/50 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
         <div className="space-y-2 text-center lg:text-left">
-          <h2 className="text-2xl font-bold text-[#ededed]">Welcome back</h2>
-          <p className="text-sm text-[#a1a1aa]">Sign in to your Intermission account</p>
+          <h2 className="text-2xl font-bold text-theme-primary">Welcome back</h2>
+          <p className="text-sm text-theme-secondary">Sign in to your Intermission account</p>
         </div>
 
         {error && (
@@ -61,9 +61,9 @@ export const Login: React.FC = () => {
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-[#a1a1aa]">Email address</label>
+            <label className="block text-sm font-medium text-theme-secondary">Email address</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#52525b]">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
                 <Mail className="w-5 h-5" />
               </div>
               <input
@@ -71,7 +71,7 @@ export const Login: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 bg-[#1e1e1e] border-[#27272a] focus:border-[#10b981] text-[#ededed]"
+                className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
                 placeholder="you@example.com"
                 disabled={loading}
               />
@@ -80,7 +80,7 @@ export const Login: React.FC = () => {
 
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="block text-sm font-medium text-[#a1a1aa]">Password</label>
+              <label className="block text-sm font-medium text-theme-secondary">Password</label>
               <Link
                 to="/forgot-password"
                 className="text-xs text-[#10b981] hover:text-[#059669] hover:underline transition-colors"
@@ -89,7 +89,7 @@ export const Login: React.FC = () => {
               </Link>
             </div>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#52525b]">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
                 <Lock className="w-5 h-5" />
               </div>
               <input
@@ -97,7 +97,7 @@ export const Login: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 bg-[#1e1e1e] border-[#27272a] focus:border-[#10b981] text-[#ededed]"
+                className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
                 placeholder="••••••••"
                 disabled={loading}
               />
@@ -114,9 +114,9 @@ export const Login: React.FC = () => {
         </form>
 
         <div className="flex items-center justify-between gap-4">
-          <hr className="w-full border-[#27272a]" />
-          <span className="text-xs text-[#52525b] uppercase tracking-wider whitespace-nowrap">or</span>
-          <hr className="w-full border-[#27272a]" />
+          <hr className="w-full border-theme" />
+          <span className="text-xs text-theme-muted uppercase tracking-wider whitespace-nowrap">or</span>
+          <hr className="w-full border-theme" />
         </div>
 
         <button
@@ -145,7 +145,7 @@ export const Login: React.FC = () => {
           Continue with Google
         </button>
 
-        <p className="text-center text-sm text-[#a1a1aa]">
+        <p className="text-center text-sm text-theme-secondary">
           Don't have an account?{" "}
           <Link to="/register" className="text-[#10b981] hover:text-[#059669] hover:underline transition-colors font-medium">
             Sign up
