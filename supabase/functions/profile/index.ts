@@ -1,0 +1,262 @@
+// =============================================================================
+// profile/index.ts — User profile management
+//
+// GET    /functions/v1/profile              → own profile + stats
+// GET    /functions/v1/profile?user_id=     → public profile
+// PATCH  /functions/v1/profile              → update own profile
+// POST   /functions/v1/profile/avatar       → upload avatar
+// =============================================================================
+
+import { handleCors, corsHeaders } from "../_shared/cors.ts";
+import {
+  badRequest,
+  notFound,
+  forbidden,
+  internalError,
+  methodNotAllowed,
+} from "../_shared/errors.ts";
+import { getAuthUser, tryGetAuthUser } from "../_shared/auth.ts";
+import { getUserClient, getAdminClient } from "../_shared/db.ts";
+import { validateString, ValidationError } from "../_shared/validate.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("profile");
+
+const AVATAR_MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+Deno.serve(async (req: Request) => {
+  const cors = handleCors(req);
+  if (cors) return cors;
+
+  const origin = req.headers.get("origin");
+  const url = new URL(req.url);
+  const params = url.searchParams;
+
+  try {
+    // ─────────────────────────────────────────────────────────────────────────
+    // GET — profile (own or public)
+    // ─────────────────────────────────────────────────────────────────────────
+    if (req.method === "GET") {
+      const targetUserId = params.get("user_id");
+
+      // Try to get the requesting user (optional)
+      const requestingUser = await tryGetAuthUser(req);
+      const db = requestingUser ? getUserClient(req) : getAdminClient();
+
+      let userId: string;
+
+      if (targetUserId) {
+        userId = targetUserId;
+      } else if (requestingUser) {
+        userId = requestingUser.id;
+      } else {
+        return badRequest("user_id parameter required for unauthenticated requests", origin);
+      }
+
+      const isOwnProfile = requestingUser?.id === userId;
+
+      const { data: profile, error: profErr } = await db
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (profErr) throw profErr;
+      if (!profile) return notFound("Profile", origin);
+
+      // Enforce privacy — if profile is private and not own, deny
+      if (!profile.is_public && !isOwnProfile) {
+        return forbidden(origin);
+      }
+
+      // Get watch stats
+      const { data: stats } = await (isOwnProfile ? db : getAdminClient())
+        .from("user_watch_stats")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      // If own profile, include settings
+      let settings = null;
+      if (isOwnProfile) {
+        const { data: userSettings } = await db
+          .from("user_settings")
+          .select("*")
+          .eq("id", userId)
+          .maybeSingle();
+        settings = userSettings;
+      }
+
+      return new Response(
+        JSON.stringify({ profile, stats: stats ?? null, settings }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+        },
+      );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PATCH — update own profile
+    // ─────────────────────────────────────────────────────────────────────────
+    if (req.method === "PATCH") {
+      const { user, error: authErr } = await getAuthUser(req, origin);
+      if (authErr) return authErr;
+      const db = getUserClient(req);
+
+      const body = await req.json().catch(() => null);
+      if (!body) return badRequest("Request body must be valid JSON", origin);
+
+      try {
+        const updates: Record<string, unknown> = {};
+
+        if (body.username !== undefined) {
+          const username = validateString(body.username, "username", {
+            minLength: 3,
+            maxLength: 30,
+          });
+          if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
+            return badRequest("username can only contain letters, numbers, and underscores", origin);
+          }
+          updates.username = username;
+        }
+
+        if (body.display_name !== undefined) {
+          updates.display_name = validateString(body.display_name, "display_name", { maxLength: 100 });
+        }
+
+        if (body.bio !== undefined) {
+          updates.bio = body.bio === null
+            ? null
+            : validateString(body.bio, "bio", { maxLength: 500 });
+        }
+
+        if (body.website !== undefined) {
+          if (body.website !== null) {
+            const site = validateString(body.website, "website", { maxLength: 200 });
+            // Basic URL validation
+            if (site && !site.startsWith("http://") && !site.startsWith("https://")) {
+              return badRequest("website must be a valid URL starting with http:// or https://", origin);
+            }
+            updates.website = site;
+          } else {
+            updates.website = null;
+          }
+        }
+
+        if (body.location !== undefined) {
+          updates.location = body.location === null
+            ? null
+            : validateString(body.location, "location", { maxLength: 100 });
+        }
+
+        if (body.is_public !== undefined) {
+          updates.is_public = Boolean(body.is_public);
+        }
+
+        if (Object.keys(updates).length === 0) {
+          return badRequest("No valid fields to update", origin);
+        }
+
+        const { data, error } = await db
+          .from("profiles")
+          .update(updates)
+          .eq("id", user.id)
+          .select()
+          .single();
+
+        if (error) {
+          // Handle unique constraint violation on username
+          if (error.code === "23505") {
+            return badRequest("Username is already taken", origin);
+          }
+          throw error;
+        }
+
+        log.info("updated profile", { user_id: user.id });
+
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+        });
+      } catch (e) {
+        if (e instanceof ValidationError) return badRequest(e.message, origin);
+        throw e;
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // POST — avatar upload
+    // ─────────────────────────────────────────────────────────────────────────
+    if (req.method === "POST") {
+      const { user, error: authErr } = await getAuthUser(req, origin);
+      if (authErr) return authErr;
+      const db = getUserClient(req);
+
+      const contentType = req.headers.get("content-type") ?? "";
+      if (!contentType.includes("multipart/form-data")) {
+        return badRequest("Avatar upload requires multipart/form-data", origin);
+      }
+
+      const formData = await req.formData().catch(() => null);
+      if (!formData) return badRequest("Failed to parse form data", origin);
+
+      const file = formData.get("avatar") as File | null;
+      if (!file) return badRequest("avatar field is required", origin);
+
+      // Validate file
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        return badRequest(`File type must be one of: ${ALLOWED_MIME_TYPES.join(", ")}`, origin);
+      }
+
+      if (file.size > AVATAR_MAX_SIZE) {
+        return badRequest("Avatar file must be under 5MB", origin);
+      }
+
+      // Generate unique path: {user_id}/{timestamp}.{ext}
+      const ext = file.type.split("/")[1].replace("jpeg", "jpg");
+      const filePath = `${user.id}/${Date.now()}.${ext}`;
+
+      const arrayBuffer = await file.arrayBuffer();
+
+      // Use user-scoped client (RLS allows upload to own folder)
+      const { error: uploadErr } = await db.storage
+        .from("avatars")
+        .upload(filePath, arrayBuffer, {
+          contentType: file.type,
+          upsert: true,
+        });
+
+      if (uploadErr) {
+        log.error("avatar upload failed", { err: uploadErr.message });
+        throw uploadErr;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = db.storage.from("avatars").getPublicUrl(filePath);
+
+      // Update profile
+      const { data, error: updateErr } = await db
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("id", user.id)
+        .select("id, avatar_url")
+        .single();
+
+      if (updateErr) throw updateErr;
+
+      log.info("avatar uploaded", { user_id: user.id, path: filePath });
+
+      return new Response(JSON.stringify(data), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+      });
+    }
+
+    return methodNotAllowed(origin);
+  } catch (err) {
+    log.error("unhandled error", { err: String(err) });
+    return internalError(origin, err);
+  }
+});
