@@ -256,3 +256,9 @@ select option {
 .media-hero-overlay-l {
   background: linear-gradient(to right, color-mix(in srgb, var(--bg-primary) 90%, transparent), transparent, transparent);
 }
+
+/* Google Sign-In button (pill) — neutralize the GSI iframe's forced light color-scheme
+   so its default white background doesn't bleed through the card. */
+iframe {
+  color-scheme: normal !important;
+}
