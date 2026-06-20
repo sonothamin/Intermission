@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { libraryApi, LibraryItem, WatchStatus } from "../lib/api";
 import { toast } from "react-hot-toast";
@@ -8,15 +8,23 @@ import { Loader2, Search, Filter, MoreVertical, Star, Film, Archive, List, Layou
 import { format } from "date-fns";
 import { CustomSelect } from "../components/CustomSelect";
 
+const PAGE_SIZE = 50;
+
 export const Library: React.FC = () => {
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [filter, setFilter] = useState<WatchStatus | "all">("all");
   const [search, setSearch] = useState("");
   const [mediaFilter, setMediaFilter] = useState<"all" | "movie" | "tv">("all");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const handleDeleteItem = async (id: string) => {
     setItemToDelete(id);
@@ -36,29 +44,41 @@ export const Library: React.FC = () => {
     }
   };
 
-  const fetchLibrary = async () => {
-    setLoading(true);
+  const fetchPage = useCallback(async (pageNum: number, append: boolean) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     try {
-      const res = await libraryApi.list({ 
-        limit: 100,
+      const res = await libraryApi.list({
+        page: pageNum,
+        limit: PAGE_SIZE,
         sort_by: "updated_at",
         sort_dir: "desc"
       });
-      setItems(res.data);
+      setItems(prev => append ? [...prev, ...res.data] : res.data);
+      setHasMore(pageNum < res.pagination.total_pages);
+      setPage(pageNum);
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (append) setLoadingMore(false);
+      else setLoading(false);
     }
-  };
+  }, []);
+
+  const resetAndFetch = useCallback(() => {
+    setItems([]);
+    setHasMore(true);
+    setPage(1);
+    fetchPage(1, false);
+  }, [fetchPage]);
 
   useEffect(() => {
-    fetchLibrary();
+    resetAndFetch();
 
     const onVisible = () => {
-      if (document.visibilityState === "visible") fetchLibrary();
+      if (document.visibilityState === "visible") resetAndFetch();
     };
-    const onRefresh = () => fetchLibrary();
+    const onRefresh = () => resetAndFetch();
 
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("library:refresh", onRefresh);
@@ -66,7 +86,27 @@ export const Library: React.FC = () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("library:refresh", onRefresh);
     };
-  }, []);
+  }, [resetAndFetch]);
+
+  // Lazy load next page when the sentinel scrolls into view.
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const root = scrollContainerRef.current;
+    if (!sentinel || !root) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasMore && !loading && !loadingMore) {
+          fetchPage(page + 1, true);
+        }
+      },
+      { root, rootMargin: "200px", threshold: 0 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [fetchPage, hasMore, loading, loadingMore, page]);
 
   const handleStatusChange = async (id: string, newStatus: WatchStatus) => {
     try {
@@ -191,7 +231,7 @@ export const Library: React.FC = () => {
         ) : (
           <>
             {viewMode === "grid" && (
-              <div className="flex-1 overflow-auto p-4">
+              <div ref={scrollContainerRef} className="flex-1 overflow-auto p-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {filteredItems.map(item => (
                     <div key={item.id} className="relative group rounded-lg overflow-hidden bg-theme-secondary border border-theme hover:border-theme-focus transition-colors flex flex-col h-full">
@@ -242,11 +282,20 @@ export const Library: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                <div ref={sentinelRef} className="h-1" />
+                {loadingMore && (
+                  <div className="flex items-center justify-center py-4 text-theme-muted">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  </div>
+                )}
+                {!hasMore && items.length > 0 && (
+                  <div className="text-center py-4 text-xs text-theme-muted">End of library</div>
+                )}
               </div>
             )}
 
             {viewMode === "list" && (
-              <div className="flex-1 overflow-auto">
+              <div ref={scrollContainerRef} className="flex-1 overflow-auto flex flex-col">
                 <table className="dense-table w-full">
                   <thead className="bg-theme-secondary sticky top-0 z-10 shadow-sm border-b border-theme">
                     <tr>
@@ -369,6 +418,15 @@ export const Library: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
+                <div ref={sentinelRef} className="h-1" />
+                {loadingMore && (
+                  <div className="flex items-center justify-center py-4 text-theme-muted">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  </div>
+                )}
+                {!hasMore && items.length > 0 && (
+                  <div className="text-center py-4 text-xs text-theme-muted">End of library</div>
+                )}
               </div>
             )}
           </>
