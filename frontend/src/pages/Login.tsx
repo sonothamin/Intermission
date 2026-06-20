@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/api";
 import { AuthLayout } from "../components/AuthLayout";
 import { GoogleButton } from "../components/GoogleButton";
+import { PasswordInput } from "../components/PasswordInput";
 import { AlertCircle, Mail, Lock } from "lucide-react";
 
 export const Login: React.FC = () => {
@@ -74,20 +75,15 @@ export const Login: React.FC = () => {
                 Forgot password?
               </Link>
             </div>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
-                <Lock className="w-5 h-5" />
-              </div>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
-                placeholder="••••••••"
-                disabled={loading}
-              />
-            </div>
+            <PasswordInput
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              leftIcon={<Lock className="w-5 h-5" />}
+              className="w-full bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
+              placeholder="••••••••"
+              disabled={loading}
+            />
           </div>
 
           <button

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase, profileApi } from "../lib/api";
 import { AuthLayout } from "../components/AuthLayout";
 import { GoogleButton } from "../components/GoogleButton";
+import { PasswordInput } from "../components/PasswordInput";
 import { AlertCircle, User, AtSign, Mail, Lock } from "lucide-react";
 
 export const Register: React.FC = () => {
@@ -149,40 +150,30 @@ export const Register: React.FC = () => {
 
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-theme-secondary">Password</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
-                <Lock className="w-5 h-5" />
-              </div>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
-                placeholder="••••••••"
-                minLength={6}
-                disabled={loading}
-              />
-            </div>
+            <PasswordInput
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              leftIcon={<Lock className="w-5 h-5" />}
+              className="w-full bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
+              placeholder="••••••••"
+              minLength={6}
+              disabled={loading}
+            />
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-theme-secondary">Confirm Password</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
-                <Lock className="w-5 h-5" />
-              </div>
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-10 bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
-                placeholder="••••••••"
-                minLength={6}
-                disabled={loading}
-              />
-            </div>
+            <PasswordInput
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              leftIcon={<Lock className="w-5 h-5" />}
+              className="w-full bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
+              placeholder="••••••••"
+              minLength={6}
+              disabled={loading}
+            />
           </div>
 
           <button

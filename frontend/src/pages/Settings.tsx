@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { profileApi, UserProfile, settingsApi, UserSettings, accountApi, ImportResult, libraryApi, scrobbleApi, mediaApi, episodeApi } from "../lib/api";
 import { ImportFormatHelp } from "../components/ImportFormatHelp";
-import { Loader2, Save, Download, Upload, AlertTriangle, User as UserIcon, X } from "lucide-react";
+import { Loader2, Save, Download, Upload, AlertTriangle, User as UserIcon, X, Lock, ChevronRight } from "lucide-react";
 import { parseImportContent, ClientParsedImport } from "../lib/importParser";
 import { CustomSelect } from "../components/CustomSelect";
 import { useTheme } from "../context/ThemeContext";
@@ -479,7 +480,7 @@ export const Settings: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-theme-secondary mb-1">Theme</label>
-              <CustomSelect 
+              <CustomSelect
                 value={theme}
                 onChange={(val) => setThemeLocal(val as "dark" | "light" | "system")}
                 className="w-full bg-theme-secondary border border-theme rounded"
@@ -492,6 +493,29 @@ export const Settings: React.FC = () => {
               />
             </div>
           </div>
+        </section>
+
+        {/* Security Section */}
+        <section className="dense-card space-y-4">
+          <h2 className="font-semibold text-lg border-b border-theme pb-2">Security</h2>
+
+          <Link
+            to="/reset-password"
+            className="flex items-center justify-between gap-4 p-4 rounded-xl border border-theme bg-theme-secondary/40 hover:bg-theme-secondary/70 hover:border-[#10b981]/40 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#10b981]/10 border border-[#10b981]/20 flex items-center justify-center flex-shrink-0">
+                <Lock className="w-5 h-5 text-[#10b981]" />
+              </div>
+              <div>
+                <p className="font-medium text-theme-primary">Change password</p>
+                <p className="text-xs text-theme-secondary mt-0.5">
+                  Update the password for your account.
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-theme-muted group-hover:text-[#10b981] transition-colors flex-shrink-0" />
+          </Link>
         </section>
 
         {error && <div className="p-3 bg-red-500/10 text-red-500 text-sm rounded border border-red-500/20">{error}</div>}
