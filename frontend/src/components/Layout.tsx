@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -12,21 +12,45 @@ import {
   Film,
   PanelLeftClose,
   PanelLeftOpen,
+  Monitor,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
+import { useTheme, type Theme } from "../context/ThemeContext";
 
 const SIDEBAR_KEY = "intermission-sidebar-collapsed";
 
 export const Layout: React.FC = () => {
   const { signOut, user, profile } = useAuth();
+  const { theme, setTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(SIDEBAR_KEY) === "true",
   );
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const isDetailPage =
     /^\/(movie|show)\/\d+/.test(location.pathname);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node)
+      ) {
+        setMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_KEY, String(collapsed));
@@ -242,21 +266,135 @@ export const Layout: React.FC = () => {
             Intermission
           </span>
         </Link>
-        <Link
-          to="/settings"
-          className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-medium hover:opacity-85 transition-opacity"
-          style={{
-            background: "var(--border-subtle)",
-            color: "var(--text-primary)",
-            border: "1px solid var(--border-focus)",
-          }}
-        >
-          {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-          ) : (
-            (profile?.display_name || user?.email || "?").charAt(0).toUpperCase()
+        <div className="relative" ref={mobileMenuRef}>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={mobileMenuOpen}
+            aria-label="Open account menu"
+            className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-medium hover:opacity-85 transition-opacity"
+            style={{
+              background: "var(--border-subtle)",
+              color: "var(--text-primary)",
+              border: "1px solid var(--border-focus)",
+            }}
+          >
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              (profile?.display_name || user?.email || "?").charAt(0).toUpperCase()
+            )}
+          </button>
+          {mobileMenuOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-xl border overflow-hidden"
+              style={{
+                background: "var(--bg-tertiary)",
+                borderColor: "var(--border-subtle)",
+              }}
+            >
+              <div
+                className="px-3 py-2.5"
+                style={{ borderBottom: "1px solid var(--border-subtle)" }}
+              >
+                <p
+                  className="text-sm font-medium truncate"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  {profile?.display_name || user?.email?.split("@")[0]}
+                </p>
+                <p
+                  className="text-xs truncate"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {user?.email}
+                </p>
+              </div>
+
+              <div className="px-2 py-2" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                <p
+                  className="px-1.5 pb-1.5 text-[10px] uppercase tracking-wider"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Theme
+                </p>
+                <div
+                  className="flex rounded-md p-0.5 gap-0.5"
+                  style={{
+                    background: "var(--bg-primary)",
+                    border: "1px solid var(--border-subtle)",
+                  }}
+                >
+                  {(
+                    [
+                      { value: "light", Icon: Sun, label: "Light" },
+                      { value: "dark", Icon: Moon, label: "Dark" },
+                      { value: "system", Icon: Monitor, label: "System" },
+                    ] as { value: Theme; Icon: React.ElementType; label: string }[]
+                  ).map(({ value, Icon, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setTheme(value)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-medium transition-colors"
+                      style={{
+                        color:
+                          theme === value
+                            ? "var(--accent-primary)"
+                            : "var(--text-secondary)",
+                        background:
+                          theme === value ? "var(--accent-light)" : "transparent",
+                      }}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => navigate("/settings")}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors"
+                style={{ color: "var(--text-secondary)" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "var(--border-subtle)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                  (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
+                }}
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors"
+                style={{ color: "var(--text-secondary)" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(248,113,113,0.1)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#f87171";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                  (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
+                }}
+              >
+                <LogOut className="w-4 h-4" />
+                Sign out
+              </button>
+            </div>
           )}
-        </Link>
+        </div>
       </header>
 
       {/* Bottom Navigation for Mobile */}
