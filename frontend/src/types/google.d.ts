@@ -23,6 +23,13 @@ interface GoogleIdConfiguration {
   context?: "signin" | "signup" | "use";
   ux_mode?: "popup" | "redirect";
   login_uri?: string;
+  /**
+   * Nonce value to embed in the returned ID token. Per Google's docs, the
+   * value should be a SHA-256 hash of a cryptographically random string.
+   * Supabase re-hashes the raw nonce passed to `signInWithIdToken` and
+   * compares against this claim, so both must derive from the same input.
+   */
+  nonce?: string;
 }
 
 interface GoogleAccountsId {

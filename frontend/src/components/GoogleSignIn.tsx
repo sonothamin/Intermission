@@ -7,6 +7,42 @@ const GSI_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 const DEFAULT_CLIENT_ID =
   "548204407906-ts3f82guhnq92tdaklrglpnc8fg5k31r.apps.googleusercontent.com";
 
+/**
+ * Produce a cryptographically random URL-safe string. Uses Web Crypto when
+ * available (modern browsers, secure contexts) and falls back to
+ * Math.random for the rare case it isn't.
+ */
+function generateNonce(): string {
+  const bytes = new Uint8Array(16);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+/**
+ * SHA-256 of the input, returned as a lowercase hex string. Falls back to
+ * a non-hashed passthrough if SubtleCrypto is unavailable so we never
+ * silently produce a mismatched nonce.
+ */
+async function sha256Hex(input: string): Promise<string> {
+  if (typeof crypto !== "undefined" && crypto.subtle) {
+    const buf = new TextEncoder().encode(input);
+    const digest = await crypto.subtle.digest("SHA-256", buf);
+    return Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+  // SubtleCrypto missing (insecure context) — Google will still hash whatever
+  // we pass, but the comparison may fail. Better to surface the regression
+  // than to silently degrade.
+  throw new Error("SubtleCrypto is not available; cannot hash nonce.");
+}
+
 let gsiScriptPromise: Promise<void> | null = null;
 
 function loadGsiScript(): Promise<void> {
@@ -80,27 +116,40 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({
     onLoadingRef.current = onLoading;
   }, [onLoading]);
 
+  // Holds the *raw* nonce currently in flight. We send the SHA-256 hash to
+  // Google (matching their documented contract) and the raw value to
+  // Supabase, which re-hashes the raw input before comparing. Keeping the
+  // raw value here means the credential callback — which Google may invoke
+  // asynchronously after the user closes a popup or completes One Tap —
+  // reads the exact same value the init effect hashed.
+  const pendingNonceRef = useRef<string | null>(null);
+
   const handleCredential = useCallback(
     async (response: GoogleCredentialResponse) => {
       onLoadingRef.current?.(true);
       onErrorRef.current?.(null);
 
-      // Read the nonce from the JWT payload. If Google embedded one (One Tap
-      // does; the button flow does not), forward the *raw* nonce to
-      // signInWithIdToken — Supabase hashes it itself before comparing
-      // against the hash in the ID token, so the input must be byte-identical
-      // to whatever GSI hashed originally. Reading it from the credential
-      // itself guarantees that.
+      // Defensive: if we minted a nonce for this flow, only proceed when
+      // the credential's nonce claim actually matches. This guards against
+      // a stale credential from a previous init (e.g. user reloaded the
+      // page between rendering and clicking).
       const payload = decodeJwtPayload(response.credential);
-      const rawNonce =
+      const credentialNonce =
         typeof payload?.nonce === "string" && payload.nonce.length > 0
           ? payload.nonce
           : undefined;
+      const expectedRaw = pendingNonceRef.current ?? undefined;
+
+      if (expectedRaw && credentialNonce !== expectedRaw) {
+        onErrorRef.current?.("Sign-in nonce mismatch. Please try again.");
+        onLoadingRef.current?.(false);
+        return;
+      }
 
       const { error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: response.credential,
-        ...(rawNonce ? { nonce: rawNonce } : {}),
+        ...(expectedRaw ? { nonce: expectedRaw } : {}),
       });
 
       if (error) {
@@ -108,6 +157,10 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({
         onLoadingRef.current?.(false);
         return;
       }
+
+      // Consume the nonce so the next One Tap prompt (if any) mints a fresh
+      // one and doesn't accidentally match this completed flow.
+      pendingNonceRef.current = null;
 
       navigate("/");
     },
@@ -120,54 +173,80 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({
     let cancelled = false;
     const container = buttonRef.current;
 
-    loadGsiScript()
-      .then(() => {
-        if (
-          cancelled ||
-          !window.google?.accounts?.id ||
-          !buttonRef.current
-        ) {
-          return;
-        }
+    // 1. Generate a fresh raw nonce for this init cycle.
+    const rawNonce = generateNonce();
+    pendingNonceRef.current = rawNonce;
 
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleCredential,
-          context: mode,
-          ux_mode: "popup",
-          auto_select: autoSelect,
-          itp_support: true,
-        });
-
-        container.innerHTML = "";
-
-        const render = () => {
-          if (cancelled || !buttonRef.current) return;
-          const width = Math.floor(container.getBoundingClientRect().width);
-          if (width < 200) {
-            requestAnimationFrame(render);
+    // 2. SHA-256 the raw nonce and send the *hash* to Google. Google
+    //    embeds the hash it receives into the ID token's `nonce` claim.
+    //    Supabase will re-hash the raw nonce we pass to signInWithIdToken
+    //    and compare against that claim, so both sides must derive from
+    //    the same input.
+    let hashedNonce: string;
+    try {
+      // sha256Hex is async; we block init on it. This is a single microtask
+      // hop, so user-visible delay is negligible.
+      // We can't `await` inside useEffect, so we chain.
+      sha256Hex(rawNonce)
+        .then((hash) => {
+          if (cancelled) return;
+          hashedNonce = hash;
+          return loadGsiScript();
+        })
+        .then(() => {
+          if (
+            cancelled ||
+            !window.google?.accounts?.id ||
+            !buttonRef.current ||
+            !hashedNonce
+          ) {
             return;
           }
-          window.google!.accounts.id.renderButton(container, {
-            type: "standard",
-            shape: "pill",
-            theme: "filled_blue",
-            text: mode === "signup" ? "signup_with" : "signin_with",
-            size: "large",
-            logo_alignment: "left",
-            width,
+
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: handleCredential,
+            context: mode,
+            ux_mode: "popup",
+            auto_select: autoSelect,
+            itp_support: true,
+            nonce: hashedNonce,
           });
-        };
 
-        render();
+          container.innerHTML = "";
 
-        if (promptOneTap) {
-          window.google.accounts.id.prompt();
-        }
-      })
-      .catch((err: Error) => {
-        if (!cancelled) onErrorRef.current?.(err.message);
-      });
+          const render = () => {
+            if (cancelled || !buttonRef.current) return;
+            const width = Math.floor(container.getBoundingClientRect().width);
+            if (width < 200) {
+              requestAnimationFrame(render);
+              return;
+            }
+            window.google!.accounts.id.renderButton(container, {
+              type: "standard",
+              shape: "pill",
+              theme: "filled_blue",
+              text: mode === "signup" ? "signup_with" : "signin_with",
+              size: "large",
+              logo_alignment: "left",
+              width,
+            });
+          };
+
+          render();
+
+          if (promptOneTap) {
+            window.google.accounts.id.prompt();
+          }
+        })
+        .catch((err: Error) => {
+          if (!cancelled) onErrorRef.current?.(err.message);
+        });
+    } catch (err) {
+      onErrorRef.current?.(
+        err instanceof Error ? err.message : "Failed to initialize Google Sign-In",
+      );
+    }
 
     return () => {
       cancelled = true;
