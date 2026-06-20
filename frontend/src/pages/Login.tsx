@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/api";
 import { AuthLayout } from "../components/AuthLayout";
-import { GoogleSignIn } from "../components/GoogleSignIn";
+import { GoogleButton } from "../components/GoogleButton";
 import { AlertCircle, Mail, Lock } from "lucide-react";
 
 export const Login: React.FC = () => {
@@ -105,13 +105,22 @@ export const Login: React.FC = () => {
           <hr className="w-full border-theme" />
         </div>
 
-        <GoogleSignIn
-          mode="signin"
+        <GoogleButton
+          onClick={async () => {
+            setLoading(true);
+            setError(null);
+            const { error: oauthError } =
+              await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: { redirectTo: window.location.origin },
+              });
+            if (oauthError) {
+              setError(oauthError.message);
+              setLoading(false);
+            }
+          }}
           disabled={loading}
-          autoSelect
-          promptOneTap
-          onError={setError}
-          onLoading={setLoading}
+          label="Continue with Google"
         />
 
         <p className="text-center text-sm text-theme-secondary">
