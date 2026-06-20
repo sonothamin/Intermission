@@ -76,6 +76,25 @@ export const Dashboard: React.FC = () => {
 
   const { summary, genres, rating_distribution, monthly_activity } = data;
 
+  // Convert decimal hours into a compact days / hours / minutes breakdown.
+  const totalMinutes = Math.round(summary.total_hours_watched * 60);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  const watchParts: Array<[number, string]> = [
+    [days, "d"],
+    [hours, "h"],
+    [minutes, "m"],
+  ];
+  // Keep the two largest non-zero units so the headline stays short
+  // (e.g. "1d 4h" or "23h 15m"); fall back to the first unit if everything is zero.
+  const nonZero = watchParts.filter(([n]) => n > 0);
+  const headlineParts = (nonZero.length >= 2
+    ? nonZero.slice(0, 2)
+    : nonZero.length === 1
+      ? nonZero
+      : watchParts.slice(0, 1));
+
   const countriesWithFlags = data.countries?.map(c => ({
     ...c,
     code: `${getFlagEmoji(c.code)} ${c.code}`
@@ -112,11 +131,16 @@ export const Dashboard: React.FC = () => {
           <div>
             <p className="text-sm font-medium text-theme-secondary">Total Watch Time</p>
             <h3 className="text-2xl font-bold">
-              {summary.total_hours_watched.toFixed(1)}{" "}
-              <span className="text-sm font-normal text-theme-secondary">hrs</span>
+              {headlineParts.map(([n, unit], i) => (
+                <span key={unit}>
+                  {i > 0 && " "}
+                  {n}
+                  <span className="text-sm font-normal text-theme-secondary"> {unit}</span>
+                </span>
+              ))}
             </h3>
             <p className="text-xs text-theme-muted mt-0.5">
-              {summary.movie_hours.toFixed(1)}h movies · {summary.tv_hours.toFixed(1)}h TV
+              {days > 0 && `${days}d `}{hours}h {minutes}m · {summary.movie_hours.toFixed(1)}h movies · {summary.tv_hours.toFixed(1)}h TV
             </p>
           </div>
         </div>
