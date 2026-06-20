@@ -262,3 +262,30 @@ select option {
 iframe {
   color-scheme: normal !important;
 }
+/* ─── Auth pane: animated film strip + floating decorations ─── */
+@keyframes film-scroll-x {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-10px) rotate(2deg); }
+}
+
+@keyframes float-slower {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(8px) rotate(-3deg); }
+}
+
+@keyframes reel-spin {
+  to { transform: rotate(360deg); }
+}
+
+.film-strip-track {
+  animation: film-scroll-x 40s linear infinite;
+}
+
+.float-slow   { animation: float-slow 7s ease-in-out infinite; }
+.float-slower { animation: float-slower 9s ease-in-out infinite; }
+.reel-spin    { animation: reel-spin 24s linear infinite; }

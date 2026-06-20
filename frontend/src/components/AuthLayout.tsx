@@ -1,5 +1,6 @@
 import React from "react";
 import { Film } from "lucide-react";
+import { AuthDecor } from "./AuthDecor";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -16,6 +17,9 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
           background: "linear-gradient(to bottom right, var(--auth-panel-from), var(--auth-panel-via), var(--auth-panel-to))",
         }}
       >
+        {/* Background Decorations */}
+        <AuthDecor />
+
         {/* Glow Effects */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#10b981]/5 filter blur-[100px] rounded-full pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#10b981]/3 filter blur-[120px] rounded-full pointer-events-none" />
