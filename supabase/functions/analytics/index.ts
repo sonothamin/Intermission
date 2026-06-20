@@ -72,20 +72,32 @@ Deno.serve(async (req: Request) => {
     const { data: library, error: libErr } = await libQuery;
     if (libErr) throw libErr;
 
-    // ── Fetch episode progress ───────────────────────────────────────────────
-    let epQuery = db
-      .from("episode_progress")
-      .select("watched, watched_at, runtime_minutes, season_number")
-      .eq("user_id", user.id)
-      .eq("watched", true);
-
-    if (sinceDate) epQuery = epQuery.gte("watched_at", sinceDate);
-
-    const { data: episodes } = await epQuery;
+    // ── Fetch episode progress (paginated to avoid the 1000-row default cap) ──
+    const PAGE_SIZE = 1000;
+    const episodes: Array<{
+      watched: boolean;
+      watched_at: string | null;
+      runtime_minutes: number | null;
+      season_number: number | null;
+    }> = [];
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+      let epQuery = db
+        .from("episode_progress")
+        .select("watched, watched_at, runtime_minutes, season_number")
+        .eq("user_id", user.id)
+        .eq("watched", true)
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (sinceDate) epQuery = epQuery.gte("watched_at", sinceDate);
+      const { data: page, error: epErr } = await epQuery;
+      if (epErr) throw epErr;
+      if (!page || page.length === 0) break;
+      episodes.push(...page);
+      if (page.length < PAGE_SIZE) break;
+    }
 
     // ── Compute stats ────────────────────────────────────────────────────────
     const items = library ?? [];
-    const eps = episodes ?? [];
+    const eps = episodes;
 
     const movies = items.filter((i) => i.media_type === "movie");
     const shows = items.filter((i) => i.media_type === "tv");
