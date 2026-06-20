@@ -7,6 +7,7 @@ interface AuthLayoutProps {
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
+    
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-theme-primary">
       {/* Left Pane: Minimal Branding */}
       <div
