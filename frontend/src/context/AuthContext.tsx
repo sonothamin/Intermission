@@ -63,9 +63,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!active) return;
-      
+
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -75,6 +75,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (active) setProfile(res.profile);
         } catch (err) {
           console.error("Error fetching profile on auth change:", err);
+        }
+
+        // For OAuth providers (Google), the auth-state-change handler can fire
+        // before the handle_new_user trigger commits the profile row. Refetch
+        // a moment later so display_name + avatar_url show up immediately.
+        if (event === "SIGNED_IN") {
+          setTimeout(async () => {
+            if (!active) return;
+            try {
+              const res = await profileApi.get();
+              if (active) setProfile(res.profile);
+            } catch (err) {
+              console.error("Error refetching profile after OAuth sign-in:", err);
+            }
+          }, 500);
         }
       } else {
         setProfile(null);
