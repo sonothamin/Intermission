@@ -51,9 +51,29 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({
       onLoading?.(true);
       onError?.(null);
 
+      // Decode the ID token payload to read the nonce (if any). One Tap
+      // embeds a nonce in the credential; when it does, Supabase's
+      // signInWithIdToken also requires the same nonce or it throws
+      // "Passed nonce and nonce in id_token should either both exist or not."
+      let nonce: string | undefined;
+      try {
+        const parts = response.credential.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(
+            atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")),
+          ) as { nonce?: string };
+          if (typeof payload.nonce === "string" && payload.nonce.length > 0) {
+            nonce = payload.nonce;
+          }
+        }
+      } catch {
+        // Non-JWT or undecodable credential — fall through without a nonce.
+      }
+
       const { error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: response.credential,
+        ...(nonce ? { nonce } : {}),
       });
 
       if (error) {
