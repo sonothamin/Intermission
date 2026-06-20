@@ -133,7 +133,7 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({
   return (
     <div
       ref={buttonRef}
-      className={`w-full min-h-[44px] flex justify-center ${disabled ? "pointer-events-none opacity-50" : ""}`}
+      className={`w-full min-h-[44px] flex justify-center [&_iframe]:bg-transparent ${disabled ? "pointer-events-none opacity-50" : ""}`}
       aria-label={mode === "signup" ? "Sign up with Google" : "Sign in with Google"}
     />
   );
