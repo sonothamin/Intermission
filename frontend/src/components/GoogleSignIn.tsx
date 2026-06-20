@@ -13,16 +13,35 @@ function loadGsiScript(): Promise<void> {
   if (window.google?.accounts?.id) return Promise.resolve();
   if (gsiScriptPromise) return gsiScriptPromise;
 
-  gsiScriptPromise = new Promise((resolve, reject) => {
+  gsiScriptPromise = new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
     script.src = GSI_SCRIPT_URL;
     script.async = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Failed to load Google Sign-In"));
+    script.onerror = () =>
+      reject(new Error("Failed to load Google Sign-In"));
     document.head.appendChild(script);
   });
 
   return gsiScriptPromise;
+}
+
+/**
+ * Decode a base64url-encoded JWT segment without throwing on malformed input.
+ * Returns null on any failure so callers can fall back gracefully.
+ */
+function decodeJwtPayload(
+  credential: string,
+): Record<string, unknown> | null {
+  try {
+    const parts = credential.split(".");
+    if (parts.length !== 3) return null;
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    return JSON.parse(atob(padded)) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
 }
 
 interface GoogleSignInProps {
@@ -44,47 +63,55 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({
 }) => {
   const navigate = useNavigate();
   const buttonRef = useRef<HTMLDivElement>(null);
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_CLIENT_ID;
+  const clientId =
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_CLIENT_ID;
+
+  // Stable refs to the latest callbacks so the init effect can run exactly
+  // once per (mode, clientId, autoSelect, promptOneTap, disabled) tuple
+  // without being re-entered on every parent render — which would cause GSI
+  // to be re-initialized and emit a fresh internal nonce, producing a
+  // "Nonces mismatch" error from Supabase.
+  const onErrorRef = useRef(onError);
+  const onLoadingRef = useRef(onLoading);
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+  useEffect(() => {
+    onLoadingRef.current = onLoading;
+  }, [onLoading]);
 
   const handleCredential = useCallback(
     async (response: GoogleCredentialResponse) => {
-      onLoading?.(true);
-      onError?.(null);
+      onLoadingRef.current?.(true);
+      onErrorRef.current?.(null);
 
-      // Decode the ID token payload to read the nonce (if any). One Tap
-      // embeds a nonce in the credential; when it does, Supabase's
-      // signInWithIdToken also requires the same nonce or it throws
-      // "Passed nonce and nonce in id_token should either both exist or not."
-      let nonce: string | undefined;
-      try {
-        const parts = response.credential.split(".");
-        if (parts.length === 3) {
-          const payload = JSON.parse(
-            atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")),
-          ) as { nonce?: string };
-          if (typeof payload.nonce === "string" && payload.nonce.length > 0) {
-            nonce = payload.nonce;
-          }
-        }
-      } catch {
-        // Non-JWT or undecodable credential — fall through without a nonce.
-      }
+      // Read the nonce from the JWT payload. If Google embedded one (One Tap
+      // does; the button flow does not), forward the *raw* nonce to
+      // signInWithIdToken — Supabase hashes it itself before comparing
+      // against the hash in the ID token, so the input must be byte-identical
+      // to whatever GSI hashed originally. Reading it from the credential
+      // itself guarantees that.
+      const payload = decodeJwtPayload(response.credential);
+      const rawNonce =
+        typeof payload?.nonce === "string" && payload.nonce.length > 0
+          ? payload.nonce
+          : undefined;
 
       const { error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: response.credential,
-        ...(nonce ? { nonce } : {}),
+        ...(rawNonce ? { nonce: rawNonce } : {}),
       });
 
       if (error) {
-        onError?.(error.message);
-        onLoading?.(false);
+        onErrorRef.current?.(error.message);
+        onLoadingRef.current?.(false);
         return;
       }
 
       navigate("/");
     },
-    [navigate, onError, onLoading],
+    [navigate],
   );
 
   useEffect(() => {
@@ -95,7 +122,13 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({
 
     loadGsiScript()
       .then(() => {
-        if (cancelled || !window.google?.accounts?.id || !buttonRef.current) return;
+        if (
+          cancelled ||
+          !window.google?.accounts?.id ||
+          !buttonRef.current
+        ) {
+          return;
+        }
 
         window.google.accounts.id.initialize({
           client_id: clientId,
@@ -133,14 +166,14 @@ export const GoogleSignIn: React.FC<GoogleSignInProps> = ({
         }
       })
       .catch((err: Error) => {
-        if (!cancelled) onError?.(err.message);
+        if (!cancelled) onErrorRef.current?.(err.message);
       });
 
     return () => {
       cancelled = true;
       window.google?.accounts?.id?.cancel();
     };
-  }, [autoSelect, clientId, disabled, handleCredential, mode, onError, promptOneTap]);
+  }, [autoSelect, clientId, disabled, handleCredential, mode, promptOneTap]);
 
   if (!clientId) {
     return (
