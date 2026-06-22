@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import { analyticsApi, Analytics, libraryApi, LibraryItem } from "../lib/api";
 import { mediaPath } from "../lib/media";
-import { Clock, Film, Tv, Activity, Trophy, Library } from "lucide-react";
+import { Clock, Film, Tv, Activity, Trophy, Library, Star } from "lucide-react";
 import { CustomSelect } from "../components/CustomSelect";
 import { StatCard } from "../components/StatCard";
 import { ChartCard } from "../components/ChartCard";
@@ -105,6 +105,14 @@ export const Dashboard: React.FC = () => {
           Hello, {profile?.display_name || user?.email?.split("@")[0] || "User"}!
         </h1>
         <div className="flex gap-2">
+          <Link
+            to="/continue-rating"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-theme-secondary border border-theme text-sm font-medium text-theme-primary hover:bg-theme-tertiary hover:border-[#10b981]/40 transition-colors"
+            title="Rate your unrated library items"
+          >
+            <Star className="w-4 h-4 text-amber-400" />
+            Continue Rating
+          </Link>
           <CustomSelect
             value={period}
             onChange={(val) => setPeriod(val as Period)}

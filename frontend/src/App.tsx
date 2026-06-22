@@ -30,6 +30,9 @@ const MovieDetail = lazy(() =>
 const ShowDetail = lazy(() =>
   import("./pages/ShowDetail").then((m) => ({ default: m.ShowDetail }))
 );
+const ContinueRatingPage = lazy(() =>
+  import("./pages/ContinueRating").then((m) => ({ default: m.ContinueRating }))
+);
 
 const PageFallback: React.FC = () => (
   <div className="h-screen flex flex-col items-center justify-center bg-theme-primary text-theme-primary gap-4">
@@ -85,6 +88,7 @@ const AppInner = () => (
             <Route path="settings" element={<Settings />} />
             <Route path="movie/:id" element={<MovieDetail />} />
             <Route path="show/:id" element={<ShowDetail />} />
+            <Route path="continue-rating" element={<ContinueRatingPage />} />
           </Route>
         </Routes>
       </Suspense>

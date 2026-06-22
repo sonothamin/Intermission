@@ -200,21 +200,31 @@ export const Library: React.FC = () => {
           </div>
 
           <div className="flex bg-theme-secondary border border-theme rounded-md overflow-hidden">
-            <button 
-              onClick={() => setViewMode("list")} 
+            <button
+              onClick={() => setViewMode("list")}
               className={`p-2 transition-colors ${viewMode === "list" ? "bg-theme-tertiary text-theme-primary" : "text-theme-muted hover:text-theme-secondary"}`}
               title="List View"
             >
               <List className="w-4 h-4" />
             </button>
-            <button 
-              onClick={() => setViewMode("grid")} 
+            <button
+              onClick={() => setViewMode("grid")}
               className={`p-2 transition-colors ${viewMode === "grid" ? "bg-theme-tertiary text-theme-primary" : "text-theme-muted hover:text-theme-secondary"}`}
               title="Grid View"
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
           </div>
+
+          <Link
+            to="/continue-rating"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-theme-secondary border border-theme text-sm font-medium text-theme-primary hover:bg-theme-tertiary hover:border-[#10b981]/40 transition-colors"
+            title="Rate your unrated library items"
+          >
+            <Star className="w-4 h-4 text-amber-400" />
+            <span className="hidden sm:inline">Continue Rating</span>
+            <span className="sm:hidden">Rate</span>
+          </Link>
         </div>
       </div>
 
