@@ -16,6 +16,22 @@ const ResetPassword = lazy(() =>
   import("./pages/ResetPassword").then((m) => ({ default: m.ResetPassword }))
 );
 
+// Public marketing surface. Landing is small but we keep the docs
+// components lazy so the initial payload stays lean.
+const MarketingLayout = lazy(() =>
+  import("./components/marketing/MarketingLayout").then((m) => ({ default: m.MarketingLayout }))
+);
+const DocsLayout = lazy(() =>
+  import("./components/marketing/DocsLayout").then((m) => ({ default: m.DocsLayout }))
+);
+const Landing = lazy(() => import("./pages/Landing").then((m) => ({ default: m.Landing })));
+const PrivacyPolicy = lazy(() =>
+  import("./pages/docs/PrivacyPolicy").then((m) => ({ default: m.default }))
+);
+const TermsOfService = lazy(() =>
+  import("./pages/docs/TermsOfService").then((m) => ({ default: m.default }))
+);
+
 // Protected app pages. Dashboard pulls in recharts, MediaDetail pulls in
 // MediaHero, etc. Lazy-loading them keeps the initial payload small and
 // the protected shell responsive.
@@ -80,7 +96,17 @@ const AppInner = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          {/* Public marketing site. Landing is the public home; docs are
+              legal/policy pages nested under /docs/*. */}
+          <Route element={<MarketingLayout />}>
+            <Route path="/" element={<Landing />} />
+            <Route path="docs" element={<DocsLayout />}>
+              <Route path="privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="terms-of-service" element={<TermsOfService />} />
+            </Route>
+          </Route>
+
+          <Route path="/dashboard" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="search" element={<Search />} />
             <Route path="library" element={<Library />} />
@@ -90,6 +116,9 @@ const AppInner = () => (
             <Route path="show/:id" element={<ShowDetail />} />
             <Route path="continue-rating" element={<ContinueRatingPage />} />
           </Route>
+
+          {/* Fallback: anything else lands on the public landing page. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </Router>

@@ -62,11 +62,11 @@ export const Layout: React.FC = () => {
   };
 
   const navItems = [
-    { name: "Dashboard", path: "/", icon: LayoutDashboard },
-    { name: "Search", path: "/search", icon: Search },
-    { name: "Library", path: "/library", icon: Library },
-    { name: "Watchlist", path: "/watchlist", icon: ListPlus },
-    { name: "Settings", path: "/settings", icon: Settings },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { name: "Search", path: "/dashboard/search", icon: Search },
+    { name: "Library", path: "/dashboard/library", icon: Library },
+    { name: "Watchlist", path: "/dashboard/watchlist", icon: ListPlus },
+    { name: "Settings", path: "/dashboard/settings", icon: Settings },
   ];
 
   return (
@@ -104,7 +104,7 @@ export const Layout: React.FC = () => {
           }`}
           style={{ borderBottomWidth: "1px", borderBottomStyle: "solid" }}
         >
-          <Link to="/" className="flex items-center gap-3 min-w-0">
+          <Link to="/dashboard" className="flex items-center gap-3 min-w-0">
             <Film className="w-8 h-8 text-[#10b981] flex-shrink-0" />
             {!collapsed && (
               <h1 className="text-xl font-bold tracking-tight truncate" style={{ color: "var(--text-primary)" }}>
@@ -157,7 +157,8 @@ export const Layout: React.FC = () => {
           {navItems.map((item) => {
             const isActive =
               location.pathname === item.path ||
-              (item.path !== "/" && location.pathname.startsWith(item.path));
+              (item.path !== "/dashboard" &&
+                location.pathname.startsWith(item.path));
             return (
               <Link
                 key={item.name}
@@ -254,7 +255,7 @@ export const Layout: React.FC = () => {
         className="fixed top-0 left-0 right-0 h-14 backdrop-blur-md z-40 flex items-center justify-between px-4 md:hidden shell-glass"
         style={{ borderBottomWidth: "1px", borderBottomStyle: "solid" }}
       >
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/dashboard" className="flex items-center gap-2">
           <Film className="w-6 h-6 text-[#10b981]" />
           <span className="font-bold text-lg tracking-tight" style={{ color: "var(--text-primary)" }}>
             Intermission
@@ -399,7 +400,8 @@ export const Layout: React.FC = () => {
         {navItems.map((item) => {
           const isActive =
             location.pathname === item.path ||
-            (item.path !== "/" && location.pathname.startsWith(item.path));
+            (item.path !== "/dashboard" &&
+              location.pathname.startsWith(item.path));
           return (
             <Link
               key={item.name}

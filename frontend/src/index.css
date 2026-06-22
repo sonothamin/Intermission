@@ -341,3 +341,248 @@ iframe {
 .float-slow   { animation: float-slow 7s ease-in-out infinite; }
 .float-slower { animation: float-slower 9s ease-in-out infinite; }
 .reel-spin    { animation: reel-spin 24s linear infinite; }
+
+/* ─── Marketing: ambient gradient hero ─── */
+@keyframes hero-pan {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(2%, -1%, 0) scale(1.05); }
+}
+
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(30px, -40px) scale(1.07); }
+  66%      { transform: translate(-20px, 25px) scale(0.96); }
+}
+
+@keyframes grid-shift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+
+@keyframes aurora {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
+  70%  { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.hero-aurora {
+  background: linear-gradient(
+    120deg,
+    rgba(16, 185, 129, 0.18) 0%,
+    rgba(59, 130, 246, 0.10) 25%,
+    rgba(168, 85, 247, 0.12) 50%,
+    rgba(16, 185, 129, 0.18) 75%,
+    rgba(16, 185, 129, 0.18) 100%
+  );
+  background-size: 300% 300%;
+  animation: aurora 14s ease-in-out infinite;
+}
+
+.hero-grid {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%);
+  animation: grid-shift 8s linear infinite;
+}
+
+.hero-blob {
+  animation: blob-drift 18s ease-in-out infinite;
+  filter: blur(60px);
+  will-change: transform;
+}
+
+.hero-pan {
+  animation: hero-pan 16s ease-in-out infinite;
+}
+
+.marquee-track {
+  animation: marquee 40s linear infinite;
+  will-change: transform;
+}
+
+/* ─── Reveal-on-scroll utility ─── */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+  transition: opacity 700ms ease, transform 700ms ease;
+  will-change: opacity, transform;
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Staggered children — apply `data-stagger` to a parent and direct
+   children inherit incremental delays. */
+[data-stagger] > * {
+  --reveal-delay: 0ms;
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+  transition: opacity 600ms ease, transform 600ms ease;
+  transition-delay: var(--reveal-delay);
+}
+[data-stagger].in-view > * {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+[data-stagger].in-view > *:nth-child(1)  { --reveal-delay: 0ms; }
+[data-stagger].in-view > *:nth-child(2)  { --reveal-delay: 80ms; }
+[data-stagger].in-view > *:nth-child(3)  { --reveal-delay: 160ms; }
+[data-stagger].in-view > *:nth-child(4)  { --reveal-delay: 240ms; }
+[data-stagger].in-view > *:nth-child(5)  { --reveal-delay: 320ms; }
+[data-stagger].in-view > *:nth-child(6)  { --reveal-delay: 400ms; }
+[data-stagger].in-view > *:nth-child(7)  { --reveal-delay: 480ms; }
+[data-stagger].in-view > *:nth-child(8)  { --reveal-delay: 560ms; }
+[data-stagger].in-view > *:nth-child(9)  { --reveal-delay: 640ms; }
+[data-stagger].in-view > *:nth-child(10) { --reveal-delay: 720ms; }
+[data-stagger].in-view > *:nth-child(11) { --reveal-delay: 800ms; }
+[data-stagger].in-view > *:nth-child(12) { --reveal-delay: 880ms; }
+
+.fade-in     { animation: fade-in 600ms ease both; }
+.fade-in-up  { animation: fade-in-up 700ms ease both; }
+
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-700 { animation-delay: 700ms; }
+
+.pulse-ring { animation: pulse-ring 2.4s ease-out infinite; }
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.4s linear infinite;
+}
+
+/* Theme-aware gradient text (independent of the auth title gradient). */
+.text-gradient-emerald {
+  background: linear-gradient(120deg, #34d399 0%, #10b981 50%, #059669 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-aurora {
+  background: linear-gradient(120deg, #34d399 0%, #60a5fa 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Subtle card hover lift used by feature tiles / pricing. */
+.card-hover {
+  transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px -20px rgba(16, 185, 129, 0.35);
+}
+
+/* Section divider — fades between sections without a hard line. */
+.section-divider {
+  background: linear-gradient(to right, transparent, var(--border-subtle), transparent);
+  height: 1px;
+  width: 100%;
+}
+
+/* Prose tweaks for doc pages. */
+.prose-doc h2 {
+  scroll-margin-top: 6rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+.prose-doc h3 {
+  scroll-margin-top: 6rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+.prose-doc p {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+.prose-doc ul {
+  margin: 0.75rem 0 0.75rem 1.25rem;
+  color: var(--text-secondary);
+  list-style: disc;
+}
+.prose-doc li { margin: 0.25rem 0; }
+.prose-doc a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.prose-doc a:hover { color: var(--accent-hover); }
+.prose-doc strong { color: var(--text-primary); font-weight: 600; }
+.prose-doc code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-aurora,
+  .hero-blob,
+  .hero-pan,
+  .marquee-track,
+  .reveal,
+  [data-stagger] > *,
+  .fade-in,
+  .fade-in-up,
+  .pulse-ring,
+  .shimmer,
+  .hero-grid {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}

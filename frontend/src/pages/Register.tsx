@@ -74,10 +74,10 @@ export const Register: React.FC = () => {
         } catch (profileErr: any) {
           console.error("Failed to update profile display name & username:", profileErr);
         }
-        navigate("/");
+        navigate("/dashboard");
       } else {
         // If email confirmation is enabled, guide the user to check their email
-        navigate("/");
+        navigate("/login?check-email=1");
       }
     }
   };
