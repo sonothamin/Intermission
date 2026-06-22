@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   mediaApi,
   episodeApi,
@@ -14,7 +14,13 @@ import { formatRuntime } from "../lib/media";
 import { MediaHero, MetaChip, RatingBadge } from "../components/MediaHero";
 import { MediaActions } from "../components/MediaActions";
 import { CastCrew } from "../components/CastCrew";
-import { ExternalLinks } from "../components/ExternalLinks";
+import { MediaLoadingState } from "../components/MediaLoadingState";
+import { MediaErrorState } from "../components/MediaErrorState";
+import { MediaOverview } from "../components/MediaOverview";
+import { MediaTrailer } from "../components/MediaTrailer";
+import { MediaGenres } from "../components/MediaGenres";
+import { MediaDetailsList } from "../components/MediaDetailsList";
+import { MediaLinks } from "../components/MediaLinks";
 import {
   Loader2,
   Calendar,
@@ -313,24 +319,8 @@ export const ShowDetail: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-[#10b981] animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !show) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-red-400 mb-4">{error ?? "Show not found"}</p>
-        <Link to="/search" className="text-[#10b981] hover:underline text-sm">
-          Back to search
-        </Link>
-      </div>
-    );
-  }
+  if (loading) return <MediaLoadingState />;
+  if (error || !show) return <MediaErrorState error={error} label="Show" />;
 
   const seasons = show.seasons.filter((s) => s.season_number > 0);
 
@@ -378,14 +368,7 @@ export const ShowDetail: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {show.overview && (
-            <section className="dense-card">
-              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
-                Overview
-              </h2>
-              <p className="text-theme-secondary leading-relaxed">{show.overview}</p>
-            </section>
-          )}
+          <MediaOverview overview={show.overview} />
 
           <CastCrew cast={show.cast} crew={show.crew} />
 
@@ -567,83 +550,29 @@ export const ShowDetail: React.FC = () => {
             </div>
           </section>
 
-          {show.trailer_key && (
-            <section className="dense-card">
-              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
-                Trailer
-              </h2>
-              <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                <iframe
-                  src={`https://www.youtube.com/embed/${show.trailer_key}`}
-                  title={`${show.title} trailer`}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </section>
-          )}
+          <MediaTrailer trailerKey={show.trailer_key} title={show.title} />
         </div>
 
         <div className="space-y-4">
-          {show.genres.length > 0 && (
-            <section className="dense-card">
-              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
-                Genres
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {show.genres.map((genre) => (
-                  <span
-                    key={genre}
-                    className="px-2.5 py-1 text-xs rounded-md bg-theme-tertiary border border-theme text-theme-secondary"
-                  >
-                    {genre}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section className="dense-card space-y-3">
-            <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider">
-              Details
-            </h2>
-            <dl className="space-y-2 text-sm">
-              {show.status && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-theme-muted">Status</dt>
-                  <dd className="text-theme-secondary text-right">{show.status}</dd>
-                </div>
-              )}
-              {show.networks.length > 0 && (
-                <div>
-                  <dt className="text-theme-muted mb-1">Network</dt>
-                  <dd className="text-theme-secondary">
-                    {show.networks.map((n) => n.name).join(", ")}
-                  </dd>
-                </div>
-              )}
-              {show.first_air_date && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-theme-muted">First aired</dt>
-                  <dd className="text-theme-secondary text-right">{show.first_air_date}</dd>
-                </div>
-              )}
-            </dl>
-          </section>
-
-          {(show.external_ids || show.homepage) && (
-            <section className="dense-card">
-              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
-                Links
-              </h2>
-              <ExternalLinks
-                externalIds={show.external_ids}
-                homepage={show.homepage}
-                className="flex-col items-stretch gap-2 [&>a]:justify-start"
-              />
-            </section>
-          )}
+          <MediaGenres genres={show.genres} />
+          <MediaDetailsList
+            items={[
+              { label: "Status", value: show.status },
+              {
+                label: "Network",
+                value:
+                  show.networks.length > 0
+                    ? show.networks.map((n) => n.name).join(", ")
+                    : null,
+                fullWidth: true,
+              },
+              { label: "First aired", value: show.first_air_date },
+            ]}
+          />
+          <MediaLinks
+            externalIds={show.external_ids}
+            homepage={show.homepage}
+          />
         </div>
       </div>
     </div>

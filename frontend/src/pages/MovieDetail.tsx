@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
   mediaApi,
   LibraryItem,
@@ -9,8 +9,14 @@ import { formatRuntime } from "../lib/media";
 import { MediaHero, MetaChip, RatingBadge } from "../components/MediaHero";
 import { MediaActions } from "../components/MediaActions";
 import { CastCrew } from "../components/CastCrew";
-import { ExternalLinks } from "../components/ExternalLinks";
-import { Loader2, Calendar, Clock, Globe } from "lucide-react";
+import { MediaLoadingState } from "../components/MediaLoadingState";
+import { MediaErrorState } from "../components/MediaErrorState";
+import { MediaOverview } from "../components/MediaOverview";
+import { MediaTrailer } from "../components/MediaTrailer";
+import { MediaGenres } from "../components/MediaGenres";
+import { MediaDetailsList } from "../components/MediaDetailsList";
+import { MediaLinks } from "../components/MediaLinks";
+import { Calendar, Clock, Globe } from "lucide-react";
 
 export const MovieDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,24 +52,8 @@ export const MovieDetail: React.FC = () => {
     fetchMovie();
   }, [tmdbId]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-[#10b981] animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !movie) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-red-400 mb-4">{error ?? "Movie not found"}</p>
-        <Link to="/search" className="text-[#10b981] hover:underline text-sm">
-          Back to search
-        </Link>
-      </div>
-    );
-  }
+  if (loading) return <MediaLoadingState />;
+  if (error || !movie) return <MediaErrorState error={error} label="Movie" />;
 
   return (
     <div>
@@ -108,100 +98,38 @@ export const MovieDetail: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {movie.overview && (
-            <section className="dense-card">
-              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
-                Overview
-              </h2>
-              <p className="text-theme-secondary leading-relaxed">{movie.overview}</p>
-            </section>
-          )}
-
+          <MediaOverview overview={movie.overview} />
           <CastCrew cast={movie.cast} crew={movie.crew} />
-
-          {movie.trailer_key && (
-            <section className="dense-card">
-              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
-                Trailer
-              </h2>
-              <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                <iframe
-                  src={`https://www.youtube.com/embed/${movie.trailer_key}`}
-                  title={`${movie.title} trailer`}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </section>
-          )}
+          <MediaTrailer trailerKey={movie.trailer_key} title={movie.title} />
         </div>
 
         <div className="space-y-4">
-          {movie.genres.length > 0 && (
-            <section className="dense-card">
-              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
-                Genres
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {movie.genres.map((genre) => (
-                  <span
-                    key={genre}
-                    className="px-2.5 py-1 text-xs rounded-md bg-theme-tertiary border border-theme text-theme-secondary"
-                  >
-                    {genre}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section className="dense-card space-y-3">
-            <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider">
-              Details
-            </h2>
-            <dl className="space-y-2 text-sm">
-              {movie.status && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-theme-muted">Status</dt>
-                  <dd className="text-theme-secondary text-right">{movie.status}</dd>
-                </div>
-              )}
-              {movie.release_date && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-theme-muted">Release</dt>
-                  <dd className="text-theme-secondary text-right">{movie.release_date}</dd>
-                </div>
-              )}
-              {movie.original_title !== movie.title && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-theme-muted">Original</dt>
-                  <dd className="text-theme-secondary text-right">{movie.original_title}</dd>
-                </div>
-              )}
-              {movie.production_companies.length > 0 && (
-                <div>
-                  <dt className="text-theme-muted mb-1">Production</dt>
-                  <dd className="text-theme-secondary">
-                    {movie.production_companies.map((c) => c.name).join(", ")}
-                  </dd>
-                </div>
-              )}
-            </dl>
-          </section>
-
-      {(movie.external_ids || movie.homepage) && (
-        <section className="dense-card">
-          <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
-            Links
-          </h2>
-          <ExternalLinks
+          <MediaGenres genres={movie.genres} />
+          <MediaDetailsList
+            items={[
+              { label: "Status", value: movie.status },
+              { label: "Release", value: movie.release_date },
+              {
+                label: "Original",
+                value:
+                  movie.original_title !== movie.title
+                    ? movie.original_title
+                    : null,
+              },
+              {
+                label: "Production",
+                value:
+                  movie.production_companies.length > 0
+                    ? movie.production_companies.map((c) => c.name).join(", ")
+                    : null,
+                fullWidth: true,
+              },
+            ]}
+          />
+          <MediaLinks
             externalIds={movie.external_ids}
             homepage={movie.homepage}
-            className="flex-col items-stretch gap-2 [&>a]:justify-start"
           />
-        </section>
-      )}
         </div>
       </div>
     </div>
