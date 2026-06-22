@@ -36,6 +36,7 @@ export const ShowDetail: React.FC = () => {
   const [seasonData, setSeasonData] = useState<Record<number, TmdbSeasonDetails>>({});
   const [seasonLoading, setSeasonLoading] = useState<number | null>(null);
   const [seasonActionLoading, setSeasonActionLoading] = useState<number | null>(null);
+  const [episodeToggleLoading, setEpisodeToggleLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!tmdbId || isNaN(tmdbId)) {
@@ -269,6 +270,8 @@ export const ShowDetail: React.FC = () => {
     episodeNumber: number,
     currentlyWatched: boolean,
   ) => {
+    const key = `${seasonNumber}-${episodeNumber}`;
+    setEpisodeToggleLoading(key);
     try {
       await episodeApi.markEpisode({
         tmdb_id: tmdbId,
@@ -302,6 +305,9 @@ export const ShowDetail: React.FC = () => {
       });
     } catch (err) {
       console.error(err);
+      toast.error("Failed to update episode.");
+    } finally {
+      setEpisodeToggleLoading(null);
     }
   };
 
@@ -500,14 +506,24 @@ export const ShowDetail: React.FC = () => {
                                           watched,
                                         )
                                       }
-                                      className={`py-1 px-3 text-xs flex items-center gap-1.5 flex-shrink-0 transition-colors font-medium border rounded-md ${
+                                      disabled={
+                                        episodeToggleLoading ===
+                                        `${season.season_number}-${ep.episode_number}`
+                                      }
+                                      className={`py-1 px-3 text-xs flex items-center gap-1.5 flex-shrink-0 transition-colors font-medium border rounded-md disabled:opacity-70 disabled:cursor-not-allowed ${
                                         watched
                                           ? "bg-[#10b981]/10 border-[#10b981]/20 text-[#10b981]"
                                           : "bg-theme-tertiary border-theme-focus text-theme-primary hover:bg-theme-tertiary hover:text-white"
                                       }`}
                                       title={watched ? "Mark unwatched" : "Mark watched"}
                                     >
-                                      {watched ? (
+                                      {episodeToggleLoading ===
+                                      `${season.season_number}-${ep.episode_number}` ? (
+                                        <>
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                          Saving…
+                                        </>
+                                      ) : watched ? (
                                         <>
                                           <CheckCircle2 className="w-3.5 h-3.5" />
                                           Watched
