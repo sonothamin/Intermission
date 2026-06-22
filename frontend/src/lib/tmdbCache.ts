@@ -77,6 +77,21 @@ function writeToMemory<T>(key: string, data: T, ttlMs: number): void {
 }
 
 /**
+ * Drop a cached entry from both memory and sessionStorage. Use after a
+ * mutation (e.g. saving a rating) so the next read fetches fresh data.
+ * Silently no-ops if the key isn't present or storage is unavailable.
+ */
+export function invalidateCached(key: string): void {
+  memory.delete(key);
+  inflight.delete(key);
+  try {
+    sessionStorage.removeItem(STORAGE_PREFIX + key);
+  } catch {
+    // ignore storage errors
+  }
+}
+
+/**
  * Memoize an async loader with a per-key TTL. Concurrent calls for the same
  * key share a single in-flight promise.
  */

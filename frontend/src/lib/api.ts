@@ -452,6 +452,11 @@ export const libraryApi = {
     page?: number;
     limit?: number;
     /**
+     * Pass `true` to filter to library rows where `rating IS NULL`. Used by
+     * the Continue Rating page so the server returns only what we need.
+     */
+    unrated?: boolean;
+    /**
      * Pass `"next_episode"` to inline the next-up episode for status=watching
      * TV rows directly on each LibraryItem as `next_episode`.
      * Lets the Dashboard render Continue Watching with a single call.

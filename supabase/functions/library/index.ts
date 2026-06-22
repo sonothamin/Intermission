@@ -196,6 +196,12 @@ Deno.serve(async (req: Request) => {
         query = query.contains("genres", [genre]);
       }
 
+      // ?unrated=true — only library rows with a NULL rating. Powers the
+      // Continue Rating flow so it doesn't have to page the full library.
+      if (params.get("unrated") === "true") {
+        query = query.is("rating", null);
+      }
+
       if (language) {
         query = query.eq("original_language", language);
       }

@@ -282,6 +282,23 @@ iframe {
   to { transform: rotate(360deg); }
 }
 
+/* ─── Continue Rating: card swap transition ─── */
+@keyframes rating-card-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rating-card-fade {
+  animation: rating-card-fade-in 220ms ease-out;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rating-card-fade {
+    animation: none;
+  }
+}
+
 .film-strip-track {
   animation: film-scroll-x 40s linear infinite;
 }
