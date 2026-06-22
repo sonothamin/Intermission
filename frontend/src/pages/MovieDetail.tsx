@@ -75,8 +75,6 @@ export const MovieDetail: React.FC = () => {
         mediaType="movie"
         backLabel="Back to search"
         backTo="/search"
-        externalIds={movie.external_ids}
-        homepage={movie.homepage}
       >
         <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
           {movie.release_year && (

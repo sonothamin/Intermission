@@ -521,16 +521,17 @@ export async function getMovieDetails(tmdbId: number, language = "en-US"): Promi
 }
 
 export async function getShowDetails(tmdbId: number, language = "en-US"): Promise<TmdbShow> {
-  // v2: response shape now includes cast/crew/external_ids via append_to_response.
-  // Bumping the prefix invalidates older media_cache rows that pre-date this fix.
-  const cacheKey = `tv:v2:${tmdbId}:${language}`;
+  // v3: TMDB's TV endpoint requires `aggregate_credits` (not `credits`) to return
+  // full-series cast/crew. `credits` only returns the latest season. Bumping the
+  // cache prefix invalidates older media_cache rows that pre-date this fix.
+  const cacheKey = `tv:v3:${tmdbId}:${language}`;
   const cached = await getFromCache<TmdbShow>(cacheKey);
   if (cached) return cached;
 
   // deno-lint-ignore no-explicit-any
   const raw = await tmdbFetch<any>(`/tv/${tmdbId}`, {
     language,
-    append_to_response: "videos,credits,external_ids",
+    append_to_response: "videos,aggregate_credits,external_ids",
   });
 
   const normalized = normalizeShow(raw);
