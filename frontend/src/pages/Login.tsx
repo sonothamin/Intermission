@@ -2,9 +2,13 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/api";
 import { AuthLayout } from "../components/AuthLayout";
-import { GoogleButton } from "../components/GoogleButton";
+import { AuthFormCard } from "../components/AuthFormCard";
+import { AuthErrorAlert } from "../components/AuthErrorAlert";
+import { AuthDivider } from "../components/AuthDivider";
+import { FormField, FieldLabel } from "../components/FormField";
+import { GoogleAuthButton } from "../components/GoogleAuthButton";
 import { PasswordInput } from "../components/PasswordInput";
-import { AlertCircle, Mail, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -33,48 +37,37 @@ export const Login: React.FC = () => {
 
   return (
     <AuthLayout>
-      <div className="dense-card p-6 sm:p-7 border border-theme bg-theme-secondary/50 backdrop-blur-md rounded-2xl shadow-xl space-y-4">
-        <div className="space-y-1 text-center lg:text-left">
-          <h2 className="text-2xl font-bold text-theme-primary">Welcome back</h2>
-          <p className="text-xs text-theme-secondary">Sign in to your Intermission account</p>
-        </div>
-
-        {error && (
-          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-2.5 text-red-400 text-sm">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <p>{error}</p>
-          </div>
-        )}
+      <AuthFormCard
+        title="Welcome back"
+        subtitle="Sign in to your Intermission account"
+      >
+        <AuthErrorAlert message={error} />
 
         <form onSubmit={handleLogin} className="flex flex-col gap-3">
-          <div className="space-y-1">
-            <label className="block text-xs font-medium text-theme-secondary">Email address</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-muted">
-                <Mail className="w-4 h-4" />
-              </div>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-9 py-2 text-sm bg-theme-secondary border-theme focus:border-[#10b981] text-theme-primary"
-                placeholder="you@example.com"
-                disabled={loading}
-              />
-            </div>
-          </div>
+          <FormField
+            label="Email address"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            leftIcon={<Mail className="w-4 h-4" />}
+            placeholder="you@example.com"
+            disabled={loading}
+          />
 
           <div className="space-y-1">
-            <div className="flex justify-between items-center">
-              <label className="block text-xs font-medium text-theme-secondary">Password</label>
-              <Link
-                to="/forgot-password"
-                className="text-[11px] text-[#10b981] hover:text-[#059669] hover:underline transition-colors"
-              >
-                Forgot password?
-              </Link>
-            </div>
+            <FieldLabel
+              action={
+                <Link
+                  to="/forgot-password"
+                  className="text-[11px] text-[#10b981] hover:text-[#059669] hover:underline transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              }
+            >
+              Password
+            </FieldLabel>
             <PasswordInput
               required
               value={password}
@@ -95,28 +88,14 @@ export const Login: React.FC = () => {
           </button>
         </form>
 
-        <div className="flex items-center justify-between gap-4">
-          <hr className="w-full border-theme" />
-          <span className="text-[10px] text-theme-muted uppercase tracking-wider whitespace-nowrap">or</span>
-          <hr className="w-full border-theme" />
-        </div>
+        <AuthDivider />
 
-        <GoogleButton
-          onClick={async () => {
-            setLoading(true);
-            setError(null);
-            const { error: oauthError } =
-              await supabase.auth.signInWithOAuth({
-                provider: "google",
-                options: { redirectTo: window.location.origin },
-              });
-            if (oauthError) {
-              setError(oauthError.message);
-              setLoading(false);
-            }
-          }}
+        <GoogleAuthButton
           disabled={loading}
-          label="Continue with Google"
+          onError={(message) => {
+            setError(message);
+            setLoading(false);
+          }}
         />
 
         <p className="text-center text-xs text-theme-secondary">
@@ -125,7 +104,7 @@ export const Login: React.FC = () => {
             Sign up
           </Link>
         </p>
-      </div>
+      </AuthFormCard>
     </AuthLayout>
   );
 };
