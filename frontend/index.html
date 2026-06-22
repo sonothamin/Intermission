@@ -4,7 +4,19 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0d10" />
+    <meta name="description" content="Intermission — track your cinema journey, log what you watch, and see your viewing stats." />
     <title>Intermission</title>
+
+    <!-- Warm up the TLS / DNS handshake to the third-party origins the app
+         hits on first paint so the auth/media requests don't stall the
+         network waterfall. -->
+    <link rel="preconnect" href="https://bmcwgszoctggmevcjnsk.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://image.tmdb.org" />
+    <link rel="dns-prefetch" href="https://api.themoviedb.org" />
+
+    <!-- Inline theme bootstrap. Kept tiny and synchronous so there's no
+         flash of wrong-theme content; no preload needed. -->
     <script>
       (function () {
         var key = "intermission-theme";
