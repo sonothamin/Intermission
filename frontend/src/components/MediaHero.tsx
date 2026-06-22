@@ -1,6 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Film, Star } from "lucide-react";
+import { ExternalLinks } from "./ExternalLinks";
+import type { TmdbExternalIds } from "../lib/api";
 
 interface MediaHeroProps {
   backdropUrl: string | null;
@@ -10,6 +12,8 @@ interface MediaHeroProps {
   mediaType: "movie" | "tv";
   backLabel?: string;
   backTo?: string;
+  externalIds?: TmdbExternalIds | null;
+  homepage?: string | null;
   children?: React.ReactNode;
 }
 
@@ -21,6 +25,8 @@ export const MediaHero: React.FC<MediaHeroProps> = ({
   mediaType,
   backLabel = "Back",
   backTo = "/search",
+  externalIds,
+  homepage,
   children,
 }) => {
   return (
@@ -86,6 +92,11 @@ export const MediaHero: React.FC<MediaHeroProps> = ({
               {tagline}
             </p>
           )}
+          <ExternalLinks
+            externalIds={externalIds}
+            homepage={homepage}
+            className="justify-center md:justify-start mb-4"
+          />
           {children}
         </div>
       </div>

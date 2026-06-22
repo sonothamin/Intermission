@@ -203,6 +203,10 @@ export interface TmdbMovieDetails {
   spoken_languages: { iso_639_1: string; name: string }[];
   imdb_id: string | null;
   trailer_key: string | null;
+  homepage: string | null;
+  cast: TmdbCastMember[];
+  crew: TmdbCrewMember[];
+  external_ids: TmdbExternalIds;
 }
 
 export interface TmdbShowDetails {
@@ -234,6 +238,39 @@ export interface TmdbShowDetails {
   spoken_languages: { iso_639_1: string; name: string }[];
   trailer_key: string | null;
   in_production: boolean;
+  homepage: string | null;
+  cast: TmdbCastMember[];
+  crew: TmdbCrewMember[];
+  external_ids: TmdbExternalIds;
+}
+
+export interface TmdbCastMember {
+  id: number;
+  name: string;
+  original_name: string;
+  character: string;
+  profile_url: string | null;
+  known_for_department: string;
+  order: number;
+}
+
+export interface TmdbCrewMember {
+  id: number;
+  name: string;
+  original_name: string;
+  department: string;
+  job: string;
+  profile_url: string | null;
+}
+
+export interface TmdbExternalIds {
+  imdb_id: string | null;
+  wikidata_id: string | null;
+  facebook_id: string | null;
+  instagram_id: string | null;
+  twitter_id: string | null;
+  tiktok_id: string | null;
+  youtube_id: string | null;
 }
 
 export interface TmdbEpisode {
@@ -441,6 +478,8 @@ export const libraryApi = {
       current_season: number;
       current_episode: number;
       episodes_watched: number;
+      started_at: string | null;
+      completed_at: string | null;
     }>,
   ) => mutateFunction<LibraryItem>("library", "PATCH", updates, { id }),
 

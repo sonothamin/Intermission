@@ -39,6 +39,10 @@ export interface TmdbMovie {
   spoken_languages: { iso_639_1: string; name: string }[];
   imdb_id: string | null;
   trailer_key: string | null;
+  homepage: string | null;
+  cast: TmdbCastMember[];
+  crew: TmdbCrewMember[];
+  external_ids: TmdbExternalIds;
 }
 
 export interface TmdbShow {
@@ -70,6 +74,41 @@ export interface TmdbShow {
   spoken_languages: { iso_639_1: string; name: string }[];
   trailer_key: string | null;
   in_production: boolean;
+  homepage: string | null;
+  cast: TmdbCastMember[];
+  crew: TmdbCrewMember[];
+  external_ids: TmdbExternalIds;
+}
+
+export interface TmdbCastMember {
+  id: number;
+  name: string;
+  original_name: string;
+  character: string;
+  profile_url: string | null;
+  known_for_department: string;
+  order: number;
+}
+
+export interface TmdbCrewMember {
+  id: number;
+  name: string;
+  original_name: string;
+  department: string;
+  job: string;
+  profile_url: string | null;
+}
+
+export interface TmdbExternalIds {
+  imdb_id: string | null;
+  wikidata_id: string | null;
+  facebook_id: string | null;
+  instagram_id: string | null;
+  twitter_id: string | null;
+  /** TikTok handles are sometimes returned for TV people — kept for parity */
+  tiktok_id: string | null;
+  /** YouTube channel id, if any */
+  youtube_id: string | null;
 }
 
 export interface TmdbSeasonSummary {
@@ -133,6 +172,10 @@ export function backdropUrl(path: string | null | undefined, size = "w1280"): st
 }
 
 export function stillUrl(path: string | null | undefined, size = "w300"): string | null {
+  return path ? `${TMDB_IMAGE_BASE}/${size}${path}` : null;
+}
+
+export function profileUrl(path: string | null | undefined, size = "h632"): string | null {
   return path ? `${TMDB_IMAGE_BASE}/${size}${path}` : null;
 }
 
@@ -214,6 +257,59 @@ function extractTrailerKey(videos: any): string | null {
 }
 
 // deno-lint-ignore no-explicit-any
+function normalizeCast(members: any): TmdbCastMember[] {
+  if (!Array.isArray(members)) return [];
+  // deno-lint-ignore no-explicit-any
+  return members.slice(0, 25).map((m: any) => ({
+    id: m.id,
+    name: m.name ?? "",
+    original_name: m.original_name ?? m.name ?? "",
+    character: m.character ?? "",
+    profile_url: profileUrl(m.profile_path),
+    known_for_department: m.known_for_department ?? "",
+    order: typeof m.order === "number" ? m.order : 0,
+  }));
+}
+
+// deno-lint-ignore no-explicit-any
+function normalizeCrew(members: any): TmdbCrewMember[] {
+  if (!Array.isArray(members)) return [];
+  // deno-lint-ignore no-explicit-any
+  return members.map((m: any) => ({
+    id: m.id,
+    name: m.name ?? "",
+    original_name: m.original_name ?? m.name ?? "",
+    department: m.department ?? "",
+    job: m.job ?? "",
+    profile_url: profileUrl(m.profile_path),
+  }));
+}
+
+// deno-lint-ignore no-explicit-any
+function normalizeExternalIds(raw: any): TmdbExternalIds {
+  if (!raw || typeof raw !== "object") {
+    return {
+      imdb_id: null,
+      wikidata_id: null,
+      facebook_id: null,
+      instagram_id: null,
+      twitter_id: null,
+      tiktok_id: null,
+      youtube_id: null,
+    };
+  }
+  return {
+    imdb_id: raw.imdb_id ?? null,
+    wikidata_id: raw.wikidata_id ?? null,
+    facebook_id: raw.facebook_id ?? null,
+    instagram_id: raw.instagram_id ?? null,
+    twitter_id: raw.twitter_id ?? null,
+    tiktok_id: raw.tiktok_id ?? null,
+    youtube_id: raw.youtube_id ?? null,
+  };
+}
+
+// deno-lint-ignore no-explicit-any
 export function normalizeMovie(raw: any): TmdbMovie {
   return {
     tmdb_id: raw.id,
@@ -253,6 +349,10 @@ export function normalizeMovie(raw: any): TmdbMovie {
     ),
     imdb_id: raw.imdb_id ?? null,
     trailer_key: extractTrailerKey(raw.videos),
+    homepage: raw.homepage ?? null,
+    cast: normalizeCast(raw.credits?.cast),
+    crew: normalizeCrew(raw.credits?.crew),
+    external_ids: normalizeExternalIds(raw.external_ids),
   };
 }
 
@@ -307,6 +407,10 @@ export function normalizeShow(raw: any): TmdbShow {
       (l: { iso_639_1: string; name: string }) => ({ iso_639_1: l.iso_639_1, name: l.name }),
     ),
     trailer_key: extractTrailerKey(raw.videos),
+    homepage: raw.homepage ?? null,
+    cast: normalizeCast(raw.aggregate_credits?.cast),
+    crew: normalizeCrew(raw.aggregate_credits?.crew),
+    external_ids: normalizeExternalIds(raw.external_ids),
   };
 }
 

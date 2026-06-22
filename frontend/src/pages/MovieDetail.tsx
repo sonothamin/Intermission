@@ -8,6 +8,7 @@ import {
 import { formatRuntime } from "../lib/media";
 import { MediaHero, MetaChip, RatingBadge } from "../components/MediaHero";
 import { MediaActions } from "../components/MediaActions";
+import { CastCrew } from "../components/CastCrew";
 import { Loader2, Calendar, Clock, Globe } from "lucide-react";
 
 export const MovieDetail: React.FC = () => {
@@ -73,6 +74,8 @@ export const MovieDetail: React.FC = () => {
         mediaType="movie"
         backLabel="Back to search"
         backTo="/search"
+        externalIds={movie.external_ids}
+        homepage={movie.homepage}
       >
         <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
           {movie.release_year && (
@@ -114,6 +117,8 @@ export const MovieDetail: React.FC = () => {
               <p className="text-theme-secondary leading-relaxed">{movie.overview}</p>
             </section>
           )}
+
+          <CastCrew cast={movie.cast} crew={movie.crew} />
 
           {movie.trailer_key && (
             <section className="dense-card">

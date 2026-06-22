@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { libraryApi, LibraryItem, WatchStatus } from "../lib/api";
 import { toast } from "react-hot-toast";
 import { ConfirmModal } from "../components/ConfirmModal";
+import { WatchedDateModal } from "../components/WatchedDateModal";
 import { mediaPath } from "../lib/media";
-import { Loader2, Search, Filter, MoreVertical, Star, Film, Archive, List, LayoutGrid, Tv, Layers } from "lucide-react";
+import { Loader2, Search, Filter, MoreVertical, Star, Film, Archive, List, LayoutGrid, Tv, Layers, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { CustomSelect } from "../components/CustomSelect";
 
@@ -21,6 +22,7 @@ export const Library: React.FC = () => {
   const [mediaFilter, setMediaFilter] = useState<"all" | "movie" | "tv">("all");
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [dateEditTarget, setDateEditTarget] = useState<LibraryItem | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -124,6 +126,12 @@ export const Library: React.FC = () => {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleDatesSaved = (id: string, updates: { started_at: string | null; completed_at: string | null }) => {
+    setItems(items.map(item =>
+      item.id === id ? { ...item, ...updates } : item,
+    ));
   };
 
   const filteredItems = items.filter(item => {
@@ -278,7 +286,15 @@ export const Library: React.FC = () => {
                         {activeMenuId === item.id && (
                           <>
                             <div className="fixed inset-0 z-40 cursor-default" onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); }} />
-                            <div className="absolute right-0 mt-1 w-28 bg-theme-tertiary border border-theme rounded-md shadow-xl z-50 py-1 text-left animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div className="absolute right-0 mt-1 w-44 bg-theme-tertiary border border-theme rounded-md shadow-xl z-50 py-1 text-left animate-in fade-in slide-in-from-top-1 duration-150">
+                              <button
+                                onClick={() => { setDateEditTarget(item); setActiveMenuId(null); }}
+                                className="w-full text-left px-3 py-1.5 text-xs text-theme-primary hover:bg-theme-secondary font-medium transition-colors flex items-center gap-1.5"
+                              >
+                                <Calendar className="w-3.5 h-3.5" />
+                                Edit watched dates
+                              </button>
+                              <div className="my-1 border-t border-theme" />
                               <button
                                 onClick={() => handleDeleteItem(item.id)}
                                 className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 hover:text-red-500 font-medium transition-colors"
@@ -315,6 +331,7 @@ export const Library: React.FC = () => {
                       <th className="w-40">Status</th>
                       <th className="w-32">Progress</th>
                       <th className="w-32">Rating</th>
+                      <th className="w-40">Watched</th>
                       <th className="w-32 text-right">Updated</th>
                       <th className="w-12"></th>
                     </tr>
@@ -380,7 +397,7 @@ export const Library: React.FC = () => {
                         <td>
                           <div className="flex items-center gap-1 group/rating">
                             <Star className={`w-3.5 h-3.5 flex-shrink-0 ${item.rating ? 'fill-amber-500 text-amber-500' : 'text-theme-muted'}`} />
-                            <CustomSelect 
+                            <CustomSelect
                               value={item.rating || ""}
                               onChange={(val) => handleRatingChange(item.id, val ? parseFloat(val) : 0)}
                               className="bg-transparent text-xs w-16"
@@ -392,6 +409,27 @@ export const Library: React.FC = () => {
                               ]}
                             />
                           </div>
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => setDateEditTarget(item)}
+                            className="text-left text-xs text-theme-secondary hover:text-[#10b981] transition-colors group/dates"
+                            title="Edit watched dates"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-theme-muted group-hover/dates:text-[#10b981]" />
+                              <div className="flex flex-col leading-tight">
+                                <span className={item.started_at ? "text-theme-primary" : "text-theme-muted"}>
+                                  {item.started_at ? `Started ${format(new Date(item.started_at), "MMM d, yyyy")}` : "Not started"}
+                                </span>
+                                {item.media_type === "movie" && (
+                                  <span className={item.completed_at ? "text-theme-primary" : "text-theme-muted"}>
+                                    {item.completed_at ? `Finished ${format(new Date(item.completed_at), "MMM d, yyyy")}` : "—"}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
                         </td>
                         <td className="text-right text-xs text-theme-muted">
                           {format(new Date(item.updated_at), "MMM d, yyyy")}
@@ -406,14 +444,22 @@ export const Library: React.FC = () => {
                           
                           {activeMenuId === item.id && (
                             <>
-                              <div 
-                                className="fixed inset-0 z-40 cursor-default" 
+                              <div
+                                className="fixed inset-0 z-40 cursor-default"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setActiveMenuId(null);
                                 }}
                               />
-                              <div className="absolute right-2 mt-1 w-28 bg-theme-tertiary border border-theme rounded-md shadow-xl z-50 py-1 text-left animate-in fade-in slide-in-from-top-1 duration-150">
+                              <div className="absolute right-2 mt-1 w-44 bg-theme-tertiary border border-theme rounded-md shadow-xl z-50 py-1 text-left animate-in fade-in slide-in-from-top-1 duration-150">
+                                <button
+                                  onClick={() => { setDateEditTarget(item); setActiveMenuId(null); }}
+                                  className="w-full text-left px-3 py-1.5 text-xs text-theme-primary hover:bg-theme-secondary font-medium transition-colors flex items-center gap-1.5"
+                                >
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  Edit watched dates
+                                </button>
+                                <div className="my-1 border-t border-theme" />
                                 <button
                                   onClick={() => handleDeleteItem(item.id)}
                                   className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 hover:text-red-500 font-medium transition-colors"
@@ -450,6 +496,19 @@ export const Library: React.FC = () => {
         confirmText="Remove"
         onConfirm={confirmDelete}
         onCancel={() => setItemToDelete(null)}
+      />
+
+      <WatchedDateModal
+        isOpen={dateEditTarget !== null}
+        libraryId={dateEditTarget?.id ?? ""}
+        title={dateEditTarget?.title ?? ""}
+        mediaType={dateEditTarget?.media_type ?? "movie"}
+        initialStartedAt={dateEditTarget?.started_at ?? null}
+        initialCompletedAt={dateEditTarget?.completed_at ?? null}
+        onClose={() => setDateEditTarget(null)}
+        onSaved={(updates) => {
+          if (dateEditTarget) handleDatesSaved(dateEditTarget.id, updates);
+        }}
       />
     </div>
   );

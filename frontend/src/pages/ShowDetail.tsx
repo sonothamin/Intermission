@@ -13,6 +13,7 @@ import {
 import { formatRuntime } from "../lib/media";
 import { MediaHero, MetaChip, RatingBadge } from "../components/MediaHero";
 import { MediaActions } from "../components/MediaActions";
+import { CastCrew } from "../components/CastCrew";
 import {
   Loader2,
   Calendar,
@@ -342,6 +343,8 @@ export const ShowDetail: React.FC = () => {
         mediaType="tv"
         backLabel="Back to search"
         backTo="/search"
+        externalIds={show.external_ids}
+        homepage={show.homepage}
       >
         <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
           {show.release_year && (
@@ -384,6 +387,8 @@ export const ShowDetail: React.FC = () => {
               <p className="text-theme-secondary leading-relaxed">{show.overview}</p>
             </section>
           )}
+
+          <CastCrew cast={show.cast} crew={show.crew} />
 
           <section className="dense-card">
             <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-4">

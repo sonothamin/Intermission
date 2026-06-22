@@ -455,6 +455,22 @@ Deno.serve(async (req: Request) => {
           updates.episodes_watched = n;
         }
 
+        const validateOptionalDate = (raw: unknown, field: string): string | null => {
+          if (raw === null) return null;
+          if (typeof raw !== "string") throw new ValidationError(`${field} must be an ISO date string or null`);
+          const d = new Date(raw);
+          if (Number.isNaN(d.getTime())) throw new ValidationError(`${field} must be a valid ISO date string`);
+          return d.toISOString();
+        };
+
+        if (body.started_at !== undefined) {
+          updates.started_at = validateOptionalDate(body.started_at, "started_at");
+        }
+
+        if (body.completed_at !== undefined) {
+          updates.completed_at = validateOptionalDate(body.completed_at, "completed_at");
+        }
+
         if (Object.keys(updates).length === 0) {
           return badRequest("No valid fields to update", origin);
         }
