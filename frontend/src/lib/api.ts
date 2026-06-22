@@ -3,6 +3,7 @@
 // =============================================================================
 
 import { createClient } from "@supabase/supabase-js";
+import { cachedFetch } from "./tmdbCache";
 
 // We'll proxy through Vite or use env vars
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string || "http://127.0.0.1:54321";
@@ -349,23 +350,32 @@ export const searchApi = {
 
 export const mediaApi = {
   getMovie: (tmdbId: number, language?: string) =>
-    getFunction<{ media: TmdbMovieDetails; user_entry: LibraryItem | null; episode_progress: null }>(
-      "media-details",
-      { tmdb_id: tmdbId, type: "movie", language },
+    cachedFetch(
+      `media-details:movie:${tmdbId}:${language ?? "en-US"}`,
+      () => getFunction<{ media: TmdbMovieDetails; user_entry: LibraryItem | null; episode_progress: null }>(
+        "media-details",
+        { tmdb_id: tmdbId, type: "movie", language },
+      ),
     ),
 
   getShow: (tmdbId: number, language?: string) =>
-    getFunction<{ media: TmdbShowDetails; user_entry: LibraryItem | null; episode_progress: EpisodeProgress[] | null }>(
-      "media-details",
-      { tmdb_id: tmdbId, type: "tv", language },
+    cachedFetch(
+      `media-details:tv:${tmdbId}:${language ?? "en-US"}`,
+      () => getFunction<{ media: TmdbShowDetails; user_entry: LibraryItem | null; episode_progress: EpisodeProgress[] | null }>(
+        "media-details",
+        { tmdb_id: tmdbId, type: "tv", language },
+      ),
     ),
 
   getSeasonDetails: (tmdbId: number, seasonNumber: number, language?: string) =>
-    getFunction<TmdbSeasonDetails>("season-details", {
-      tmdb_id: tmdbId,
-      season_number: seasonNumber,
-      language,
-    }),
+    cachedFetch(
+      `season-details:tv:${tmdbId}:s${seasonNumber}:${language ?? "en-US"}`,
+      () => getFunction<TmdbSeasonDetails>("season-details", {
+        tmdb_id: tmdbId,
+        season_number: seasonNumber,
+        language,
+      }),
+    ),
 };
 
 // ---------------------------------------------------------------------------

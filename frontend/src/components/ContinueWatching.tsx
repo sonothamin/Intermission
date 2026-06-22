@@ -11,6 +11,7 @@ import {
   TmdbShowDetails,
 } from "../lib/api";
 import { mediaPath } from "../lib/media";
+import { parallelMap } from "../lib/tmdbCache";
 
 interface ContinueWatchingProps {
   /** Called whenever a card is dismissed/advanced so the parent can re-fetch. */
@@ -32,7 +33,7 @@ interface ContinueWatchingCard {
 function pickNextEpisode(
   library: LibraryItem,
   show: TmdbShowDetails,
-): { seasonNumber: number; episodeNumber: number; episode: TmdbEpisode | null } | null {
+): { seasonNumber: number; episodeNumber: number } | null {
   if (show.number_of_episodes > 0 && library.episodes_watched >= show.number_of_episodes) {
     return null;
   }
@@ -49,11 +50,28 @@ function pickNextEpisode(
 
     const firstEp = season.season_number === startSeason ? startEpisode : 1;
     if (firstEp <= season.episode_count) {
-      return { seasonNumber: season.season_number, episodeNumber: firstEp, episode: null };
+      return { seasonNumber: season.season_number, episodeNumber: firstEp };
     }
   }
 
   return null;
+}
+
+/**
+ * Optimistic library row update after marking an episode watched.
+ * Mirrors what `updateEpisodesWatched` does on the server.
+ */
+function bumpLibraryAfterWatch(lib: LibraryItem, seasonNumber: number, episodeNumber: number): LibraryItem {
+  // Heuristic for "next episode":
+  //   - same season, episode + 1, unless we're at the season's episode_count
+  // We deliberately keep this optimistic and let the next library refresh
+  // (triggered by `onChange`) reconcile any drift.
+  return {
+    ...lib,
+    episodes_watched: lib.episodes_watched + 1,
+    current_season: seasonNumber,
+    current_episode: episodeNumber,
+  };
 }
 
 export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) => {
@@ -72,35 +90,43 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) 
         return;
       }
 
-      const cards: ContinueWatchingCard[] = [];
-      for (const lib of shows) {
+      // Step 1 — fan out `getShow` for every in-progress show in parallel.
+      // `cachedFetch` ensures the Supabase edge function is only hit once per
+      // show even if this component remounts.
+      const showResults = await parallelMap(shows, 6, async (lib) => {
         try {
           const showRes = await mediaApi.getShow(lib.tmdb_id);
-          const show = showRes.media;
-          const next = pickNextEpisode(lib, show);
-          if (!next) continue;
+          const next = pickNextEpisode(lib, showRes.media);
+          return next ? { lib, show: showRes.media, next } : null;
+        } catch (err) {
+          console.error("Failed to load continue-watching show", lib.tmdb_id, err);
+          return null;
+        }
+      });
 
-          // Try to hydrate the episode (title + still) by fetching the season.
+      // Step 2 — fan out season lookups for cards that need episode metadata,
+      // also in parallel. Cards that already have what they need (or where the
+      // season call fails) simply render with `episode: null`.
+      const cards = await parallelMap(
+        showResults.filter((r): r is { lib: LibraryItem; show: TmdbShowDetails; next: { seasonNumber: number; episodeNumber: number } } => r !== null),
+        6,
+        async ({ lib, show, next }) => {
           let episode: TmdbEpisode | null = null;
           try {
             const season = await mediaApi.getSeasonDetails(lib.tmdb_id, next.seasonNumber);
-            episode =
-              season.episodes.find((e) => e.episode_number === next.episodeNumber) ?? null;
+            episode = season.episodes.find((e) => e.episode_number === next.episodeNumber) ?? null;
           } catch {
-            // Best-effort; we'll fall back to "Episode N" rendering.
+            // Best-effort: render the show backdrop with "Episode N".
           }
-
-          cards.push({
+          return {
             library: lib,
             show,
             seasonNumber: next.seasonNumber,
             episodeNumber: next.episodeNumber,
             episode,
-          });
-        } catch (err) {
-          console.error("Failed to load continue-watching show", lib.tmdb_id, err);
-        }
-      }
+          } satisfies ContinueWatchingCard;
+        },
+      );
 
       setItems(cards);
     } catch (err) {
@@ -135,39 +161,49 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) 
           watched: true,
         });
 
-        // Refetch the library row so current_season/current_episode reflect the
-        // new state, then either advance the card to the next episode or drop
-        // it if the show is now fully watched.
-        const fresh = await mediaApi.getShow(card.library.tmdb_id);
-        const updatedLib = fresh.user_entry;
-        if (!updatedLib) {
-          setItems((prev) => prev?.filter((c) => c.library.id !== card.library.id) ?? prev);
-          onChange?.();
-          return;
-        }
+        // Optimistically advance the card locally. The server's
+        // `updateEpisodesWatched` already updated `current_season`,
+        // `current_episode`, and `episodes_watched` on the library row; we
+        // mirror that here so the UI feels instant without a TMDB round-trip.
+        const optimisticLibrary = bumpLibraryAfterWatch(
+          card.library,
+          card.seasonNumber,
+          card.episodeNumber,
+        );
 
-        const next = pickNextEpisode(updatedLib, fresh.media);
+        const show = card.show;
+        const next = pickNextEpisode(optimisticLibrary, show);
+
         if (!next) {
+          // Show is now fully watched — drop the card.
           setItems((prev) => prev?.filter((c) => c.library.id !== card.library.id) ?? prev);
           onChange?.();
           return;
         }
 
+        // Only refetch the season if we crossed into a new season (or the
+        // current season's episode list isn't cached). Within the same season
+        // we already know the next episode's metadata isn't critical — the
+        // backend TMDB cache + our local cache handle it on the next render.
         let nextEpisode: TmdbEpisode | null = null;
-        try {
-          const season = await mediaApi.getSeasonDetails(card.library.tmdb_id, next.seasonNumber);
-          nextEpisode =
-            season.episodes.find((e) => e.episode_number === next.episodeNumber) ?? null;
-        } catch {
-          // ignore
+        const crossedSeason = next.seasonNumber !== card.seasonNumber;
+        if (crossedSeason || card.episode === null) {
+          try {
+            const season = await mediaApi.getSeasonDetails(card.library.tmdb_id, next.seasonNumber);
+            nextEpisode = season.episodes.find((e) => e.episode_number === next.episodeNumber) ?? null;
+          } catch {
+            // ignore
+          }
+        } else {
+          nextEpisode = card.episode;
         }
 
         setItems((prev) =>
           (prev ?? []).map((c) =>
             c.library.id === card.library.id
               ? {
-                  library: updatedLib,
-                  show: fresh.media,
+                  library: optimisticLibrary,
+                  show,
                   seasonNumber: next.seasonNumber,
                   episodeNumber: next.episodeNumber,
                   episode: nextEpisode,
