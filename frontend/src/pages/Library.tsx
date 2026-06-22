@@ -420,7 +420,7 @@ export const Library: React.FC = () => {
                               <Calendar className="w-3.5 h-3.5 text-theme-muted group-hover/dates:text-[#10b981]" />
                               <div className="flex flex-col leading-tight">
                                 <span className={item.started_at ? "text-theme-primary" : "text-theme-muted"}>
-                                  {item.started_at ? `Started ${format(new Date(item.started_at), "MMM d, yyyy")}` : "Not started"}
+                                  {item.started_at ? `${format(new Date(item.started_at), "MMM d, yyyy")}` : "Not started"}
                                 </span>
                                 {item.media_type === "movie" && (
                                   <span className={item.completed_at ? "text-theme-primary" : "text-theme-muted"}>

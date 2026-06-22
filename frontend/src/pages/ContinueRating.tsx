@@ -740,10 +740,6 @@ const RatingCardReady: React.FC<{
           {overview}
         </p>
 
-        <p className="text-sm text-theme-secondary leading-relaxed line-clamp-4 md:line-clamp-[10]">
-          {overview}
-        </p>
-
         {/* Sticky-style rating bar — always visible at the bottom of the
             scrollable content area on phones, inline on md+. */}
         <div className="mt-auto pt-3 md:pt-4 border-t border-theme">
