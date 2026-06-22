@@ -256,7 +256,11 @@ export const ContinueRating: React.FC = () => {
     [],
   );
 
-  // Keyboard support: ← Previous, → Skip, 1-9/0 rate.
+  // Keyboard support: ← Previous, → Skip, 1-9/0 rate. We also track the
+  // currently held number key so the matching rating button can light up
+  // even when the user's focus is elsewhere on the page.
+  const [keypadValue, setKeypadValue] = useState<number | null>(null);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (submitting || !current) return;
@@ -275,6 +279,10 @@ export const ContinueRating: React.FC = () => {
       } else if (current.kind === "ready" && /^[0-9]$/.test(e.key)) {
         const n = e.key === "0" ? 10 : parseInt(e.key, 10);
         e.preventDefault();
+        setKeypadValue(n);
+        // Clear the highlight on the next frame so the button visually
+        // flashes before the card swaps to the next item.
+        window.setTimeout(() => setKeypadValue(null), 120);
         submitRating(current, n);
       }
     };
@@ -390,6 +398,7 @@ export const ContinueRating: React.FC = () => {
         onSkip={skip}
         canGoBack={history.length > 0}
         onBack={goBack}
+        keypadValue={keypadValue}
       />
 
       <p className="text-xs text-theme-muted text-center">
@@ -448,6 +457,7 @@ interface RatingCardViewProps {
   onSkip: () => void;
   onBack: () => void;
   canGoBack: boolean;
+  keypadValue: number | null;
 }
 
 const RatingCardView: React.FC<RatingCardViewProps> = ({
@@ -457,6 +467,7 @@ const RatingCardView: React.FC<RatingCardViewProps> = ({
   onSkip,
   onBack,
   canGoBack,
+  keypadValue,
 }) => {
   // Fade-in transition on every card mount.
   return (
@@ -471,6 +482,7 @@ const RatingCardView: React.FC<RatingCardViewProps> = ({
           onSkip={onSkip}
           onBack={onBack}
           canGoBack={canGoBack}
+          keypadValue={keypadValue}
         />
       )}
     </div>
@@ -549,7 +561,8 @@ const RatingCardReady: React.FC<{
   onSkip: () => void;
   onBack: () => void;
   canGoBack: boolean;
-}> = ({ card, submitting, onRate, onSkip, onBack, canGoBack }) => {
+  keypadValue: number | null;
+}> = ({ card, submitting, onRate, onSkip, onBack, canGoBack, keypadValue }) => {
   const { library, details } = card;
   const isTvShow = isShow(details);
   const overview = (details.overview ?? "").trim() || "No description available.";
@@ -559,49 +572,114 @@ const RatingCardReady: React.FC<{
 
   return (
     <div className="dense-card p-0 overflow-hidden flex flex-col md:flex-row md:max-h-[calc(100vh-12rem)]">
-      {/* Poster — compact banner on phones, full column on md+ */}
-      <div className="relative w-full md:w-72 lg:w-80 flex-shrink-0 bg-theme-tertiary aspect-[3/1] md:aspect-auto md:h-auto">
-        {library.poster_url || details.poster_url ? (
-          <img
-            src={library.poster_url ?? details.poster_url ?? undefined}
-            alt={library.title}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover md:object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Film className="w-10 h-10 md:w-12 md:h-12 text-theme-muted opacity-40" />
+      {/* Poster + title row:
+            - On phones: a small fixed-width square poster on the left, with
+              the title, year and media badge inline to its right. Keeps the
+              card narrow vertically so the description can sit on the next
+              line without pushing the rating bar off-screen.
+            - On md+: reverts to the full vertical poster column. */}
+      <div className="flex items-start gap-3 p-4 md:p-0 md:contents">
+        <div className="relative w-24 flex-shrink-0 aspect-[2/3] rounded-md overflow-hidden bg-theme-tertiary md:w-72 lg:w-80 md:flex-shrink-0 md:aspect-auto md:h-auto md:rounded-none">
+          {library.poster_url || details.poster_url ? (
+            <img
+              src={library.poster_url ?? details.poster_url ?? undefined}
+              alt={library.title}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Film className="w-8 h-8 md:w-12 md:h-12 text-theme-muted opacity-40" />
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0 md:hidden">
+          <div className="flex items-start justify-between gap-2">
+            <Link
+              to={mediaPath(library.media_type, library.tmdb_id)}
+              className="text-lg font-bold text-theme-primary hover:text-[#10b981] transition-colors leading-tight"
+            >
+              {library.title}
+            </Link>
+            <span
+              className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${
+                library.media_type === "movie"
+                  ? "bg-blue-500/80 text-white"
+                  : "bg-purple-500/80 text-white"
+              }`}
+            >
+              {library.media_type === "movie" ? (
+                <Film className="w-3 h-3" />
+              ) : (
+                <Tv className="w-3 h-3" />
+              )}
+              {library.media_type === "movie" ? "Movie" : "TV"}
+            </span>
           </div>
-        )}
-        <div className="absolute top-2 left-2 md:top-3 md:left-3">
-          <span
-            className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-1 rounded ${
-              library.media_type === "movie"
-                ? "bg-blue-500/80 text-white"
-                : "bg-purple-500/80 text-white"
-            }`}
-          >
-            {library.media_type === "movie" ? (
-              <Film className="w-3 h-3" />
-            ) : (
-              <Tv className="w-3 h-3" />
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-theme-secondary">
+            {year !== null && <span>{year}</span>}
+            {runtime !== null && runtime > 0 && (
+              <>
+                {year !== null && <span>·</span>}
+                <span>
+                  {Math.floor(runtime / 60)}h {runtime % 60}m
+                </span>
+              </>
             )}
-            {library.media_type === "movie" ? "Movie" : "TV"}
-          </span>
+            {isTvShow && details.number_of_seasons > 0 && (
+              <>
+                {(year !== null || runtime !== null) && <span>·</span>}
+                <span>
+                  {details.number_of_seasons} season
+                  {details.number_of_seasons === 1 ? "" : "s"}
+                </span>
+              </>
+            )}
+            {details.vote_average > 0 && (
+              <>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                  ★ {details.vote_average.toFixed(1)}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
+      {/* Desktop media-type badge — only shown at md+ where the title is
+          stacked below the poster. */}
+      <div className="hidden md:block absolute md:relative md:top-3 md:left-3">
+        <span
+          className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-1 rounded ${
+            library.media_type === "movie"
+              ? "bg-blue-500/80 text-white"
+              : "bg-purple-500/80 text-white"
+          }`}
+        >
+          {library.media_type === "movie" ? (
+            <Film className="w-3 h-3" />
+          ) : (
+            <Tv className="w-3 h-3" />
+          )}
+          {library.media_type === "movie" ? "Movie" : "TV"}
+        </span>
+      </div>
+
       {/* Content — scrollable on phones so the rating bar is always reachable */}
-      <div className="flex-1 p-4 md:p-6 flex flex-col gap-3 md:gap-4 min-w-0 md:overflow-y-auto">
-        <div>
+      <div className="flex-1 px-4 pb-4 md:p-6 flex flex-col gap-3 md:gap-4 min-w-0 md:overflow-y-auto">
+        {/* Title block — desktop only; the phone renders its own inline
+            version above inside the poster row. */}
+        <div className="hidden md:block">
           <Link
             to={mediaPath(library.media_type, library.tmdb_id)}
-            className="text-xl md:text-2xl font-bold text-theme-primary hover:text-[#10b981] transition-colors block leading-tight"
+            className="text-2xl font-bold text-theme-primary hover:text-[#10b981] transition-colors block leading-tight"
           >
             {library.title}
           </Link>
-          <div className="flex flex-wrap items-center gap-2 mt-1.5 md:mt-2 text-sm text-theme-secondary">
+          <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-theme-secondary">
             {year !== null && <span>{year}</span>}
             {runtime !== null && runtime > 0 && (
               <>
@@ -630,7 +708,7 @@ const RatingCardReady: React.FC<{
             )}
           </div>
           {genres.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2 md:mt-3">
+            <div className="flex flex-wrap gap-1.5 mt-3">
               {genres.slice(0, 4).map((g) => (
                 <span
                   key={g}
@@ -643,6 +721,25 @@ const RatingCardReady: React.FC<{
           )}
         </div>
 
+        {/* Phone-only genres row — sits below the description area on
+            phones. */}
+        {genres.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 md:hidden">
+            {genres.slice(0, 4).map((g) => (
+              <span
+                key={g}
+                className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-theme-tertiary text-theme-secondary"
+              >
+                {g}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <p className="text-sm text-theme-secondary leading-relaxed line-clamp-4 md:line-clamp-[10]">
+          {overview}
+        </p>
+
         <p className="text-sm text-theme-secondary leading-relaxed line-clamp-4 md:line-clamp-[10]">
           {overview}
         </p>
@@ -650,7 +747,7 @@ const RatingCardReady: React.FC<{
         {/* Sticky-style rating bar — always visible at the bottom of the
             scrollable content area on phones, inline on md+. */}
         <div className="mt-auto pt-3 md:pt-4 border-t border-theme">
-          <RatingBar onRate={onRate} disabled={submitting} />
+          <RatingBar onRate={onRate} disabled={submitting} keypadValue={keypadValue} />
           <div className="flex items-center justify-between mt-3">
             <button
               onClick={onBack}
@@ -681,13 +778,16 @@ const RatingCardReady: React.FC<{
 interface RatingBarProps {
   onRate: (value: number) => void;
   disabled: boolean;
+  keypadValue: number | null;
 }
 
-const RatingBar: React.FC<RatingBarProps> = ({ onRate, disabled }) => {
+const RatingBar: React.FC<RatingBarProps> = ({ onRate, disabled, keypadValue }) => {
   // Local hover state gives the bar its "filling" feel without committing
-  // to a rating until the user clicks.
+  // to a rating until the user clicks. The global `keypadValue` (set by
+  // number-key presses anywhere on the page) takes precedence so the
+  // matching button lights up even when focus is elsewhere.
   const [hover, setHover] = useState<number | null>(null);
-  const display = hover ?? 0;
+  const display = keypadValue ?? hover ?? 0;
 
   return (
     <div>
@@ -712,7 +812,7 @@ const RatingBar: React.FC<RatingBarProps> = ({ onRate, disabled }) => {
               key={n}
               type="button"
               role="radio"
-              aria-checked={false}
+              aria-checked={keypadValue === n}
               aria-label={`Rate ${n} out of 10`}
               disabled={disabled}
               onMouseEnter={() => setHover(n)}
