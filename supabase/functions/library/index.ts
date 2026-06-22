@@ -17,7 +17,8 @@ import {
 } from "../_shared/errors.ts";
 import { getAuthUser } from "../_shared/auth.ts";
 import { getUserClient } from "../_shared/db.ts";
-import { getMovieDetails, getShowDetails } from "../_shared/tmdb.ts";
+import { getMovieDetails, getShowDetails, getFromCache } from "../_shared/tmdb.ts";
+import type { TmdbShow, TmdbSeason, TmdbEpisode } from "../_shared/tmdb.ts";
 import {
   validateEnum,
   validateRating,
@@ -32,6 +33,108 @@ const log = createLogger("library");
 
 const VALID_STATUSES = ["watching", "completed", "on_hold", "dropped", "plan_to_watch", "rewatching"] as const;
 type WatchStatus = typeof VALID_STATUSES[number];
+
+// ---------------------------------------------------------------------------
+// Next-episode hydration
+// ---------------------------------------------------------------------------
+//
+// For ?include=next_episode we attach the next-up episode to each
+// status=watching TV library row directly from the media_cache. This lets the
+// Dashboard render "Continue Watching" with a single GET /library round-trip
+// instead of 1 + 2N calls (library + getShow + getSeasonDetails per show).
+//
+// We never hit TMDB in this hot path: on cache miss we omit the field and the
+// client falls back to its existing fan-out.
+
+export interface NextEpisode {
+  tmdb_id: number;
+  season_number: number;
+  episode_number: number;
+  name: string;
+  overview: string;
+  air_date: string | null;
+  runtime_minutes: number | null;
+  still_url: string | null;
+  vote_average: number;
+  season_name: string;
+  episode_count_in_season: number;
+}
+
+/**
+ * Mirror of the client's pickNextEpisode: given the user's progress and a
+ * cached TmdbShow, decide which (season, episode) the user should watch next.
+ * Returns null if the show is fully watched or no candidate was found.
+ */
+function pickNextSeasonEpisode(
+  show: TmdbShow,
+  currentSeason: number | null,
+  currentEpisode: number | null,
+  episodesWatched: number | null,
+): { seasonNumber: number; episodeNumber: number } | null {
+  const watched = episodesWatched ?? 0;
+  const total = show.number_of_episodes ?? 0;
+  if (total > 0 && watched >= total) return null;
+
+  // Real seasons only (season_number > 0), ascending
+  const seasons = (show.seasons ?? [])
+    .filter((s) => s.season_number > 0)
+    .sort((a, b) => a.season_number - b.season_number);
+
+  if (seasons.length === 0) return null;
+
+  const startSeason = currentSeason ?? seasons[0].season_number;
+  const startEpisode = (currentEpisode ?? 0) + 1;
+
+  for (const s of seasons) {
+    if (s.season_number < startSeason) continue;
+    if (startSeason === s.season_number && startEpisode > s.episode_count) continue;
+    return {
+      seasonNumber: s.season_number,
+      episodeNumber: startSeason === s.season_number ? startEpisode : 1,
+    };
+  }
+  return null;
+}
+
+async function loadNextEpisode(
+  item: { tmdb_id: number; current_season: number | null; current_episode: number | null; episodes_watched: number | null },
+  language: string,
+): Promise<NextEpisode | null> {
+  const show = await getFromCache<TmdbShow>(`tv:${item.tmdb_id}:${language}`);
+  if (!show) return null;
+
+  const target = pickNextSeasonEpisode(
+    show,
+    item.current_season,
+    item.current_episode,
+    item.episodes_watched,
+  );
+  if (!target) return null;
+
+  const season = await getFromCache<TmdbSeason>(
+    `tv:${item.tmdb_id}:season:${target.seasonNumber}:${language}`,
+  );
+  if (!season) return null;
+
+  const ep = (season.episodes ?? []).find(
+    (e: TmdbEpisode) => e.episode_number === target.episodeNumber,
+  );
+  if (!ep) return null;
+
+  return {
+    tmdb_id: item.tmdb_id,
+    season_number: target.seasonNumber,
+    episode_number: target.episodeNumber,
+    name: ep.name,
+    overview: ep.overview,
+    air_date: ep.air_date,
+    runtime_minutes: ep.runtime_minutes,
+    still_url: ep.still_url,
+    vote_average: ep.vote_average,
+    season_name: season.name,
+    episode_count_in_season: season.episodes.length,
+  };
+}
 
 Deno.serve(async (req: Request) => {
   const cors = handleCors(req);
@@ -54,6 +157,7 @@ Deno.serve(async (req: Request) => {
       const type = params.get("type");
       const genre = params.get("genre");
       const language = params.get("language");
+      const include = params.get("include");
       const sortBy = params.get("sort_by") ?? "updated_at";
       const sortDir = params.get("sort_dir") ?? "desc";
       const page = Math.max(1, parseInt(params.get("page") ?? "1", 10));
@@ -102,9 +206,49 @@ Deno.serve(async (req: Request) => {
 
       if (error) throw error;
 
+      let rows = data ?? [];
+
+      // ───────────────────────────────────────────────────────────────────
+      // ?include=next_episode — inline next-up episode for status=watching TV
+      // Reads media_cache only (no TMDB calls). Missing cache → omit field.
+      // ───────────────────────────────────────────────────────────────────
+      if (include === "next_episode" && rows.length > 0) {
+        const lang = language ?? "en-US";
+        const hydrated = await Promise.all(
+          rows.map(async (row) => {
+            if (
+              row.media_type === "tv" &&
+              (row.status === "watching" || row.status === "rewatching")
+            ) {
+              try {
+                const next = await loadNextEpisode(
+                  {
+                    tmdb_id: row.tmdb_id,
+                    current_season: row.current_season,
+                    current_episode: row.current_episode,
+                    episodes_watched: row.episodes_watched,
+                  },
+                  lang,
+                );
+                if (next) {
+                  return { ...row, next_episode: next };
+                }
+              } catch (err) {
+                log.warn("next_episode hydration failed", {
+                  tmdb_id: row.tmdb_id,
+                  err: String(err),
+                });
+              }
+            }
+            return row;
+          }),
+        );
+        rows = hydrated;
+      }
+
       return new Response(
         JSON.stringify({
-          data: data ?? [],
+          data: rows,
           pagination: {
             page,
             limit,

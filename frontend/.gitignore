@@ -1,3 +1,24 @@
+# Frontend-specific ignores.
+# Most rules (node_modules, dist, .env, logs, IDE files) are already
+# in the root .gitignore, but we keep the critical build artifacts here
+# in case any tool is run with `frontend/` as its CWD.
+
+# Build output
+node_modules
+dist
+dist-ssr
+*.local
+
+# Vite cache
+.vite
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Test/coverage
+coverage
+*.lcov
+
 # Logs
 logs
 *.log
@@ -6,11 +27,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*
@@ -23,3 +39,4 @@ dist-ssr
 *.sln
 *.sw?
 *.puku
+*.temp*

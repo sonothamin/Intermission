@@ -166,7 +166,7 @@ async function tmdbFetch<T>(path: string, params: Record<string, string> = {}): 
 // Cache helpers
 // ---------------------------------------------------------------------------
 
-async function getFromCache<T>(cacheKey: string): Promise<T | null> {
+export async function getFromCache<T>(cacheKey: string): Promise<T | null> {
   const admin = getAdminClient();
   const { data, error } = await admin
     .from("media_cache")

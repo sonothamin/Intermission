@@ -7,6 +7,7 @@ import {
   libraryApi,
   LibraryItem,
   mediaApi,
+  NextEpisode,
   TmdbEpisode,
   TmdbShowDetails,
 } from "../lib/api";
@@ -24,6 +25,8 @@ interface ContinueWatchingCard {
   seasonNumber: number;
   episodeNumber: number;
   episode: TmdbEpisode | null;
+  /** Set when the card was built from the server's inline `next_episode`. */
+  fromServer: boolean;
 }
 
 /**
@@ -61,17 +64,74 @@ function pickNextEpisode(
  * Optimistic library row update after marking an episode watched.
  * Mirrors what `updateEpisodesWatched` does on the server.
  */
-function bumpLibraryAfterWatch(lib: LibraryItem, seasonNumber: number, episodeNumber: number): LibraryItem {
-  // Heuristic for "next episode":
-  //   - same season, episode + 1, unless we're at the season's episode_count
-  // We deliberately keep this optimistic and let the next library refresh
-  // (triggered by `onChange`) reconcile any drift.
+function bumpLibraryAfterWatch(
+  lib: LibraryItem,
+  seasonNumber: number,
+  episodeNumber: number,
+): LibraryItem {
   return {
     ...lib,
     episodes_watched: lib.episodes_watched + 1,
     current_season: seasonNumber,
     current_episode: episodeNumber,
   };
+}
+
+/**
+ * Convert a server-inlined `NextEpisode` to the TmdbEpisode shape that the
+ * card UI expects. They are a strict subset, so this is a 1:1 mapping.
+ */
+function nextEpisodeToTmdbEpisode(ep: NextEpisode): TmdbEpisode {
+  return {
+    episode_number: ep.episode_number,
+    season_number: ep.season_number,
+    name: ep.name,
+    overview: ep.overview,
+    air_date: ep.air_date,
+    runtime_minutes: ep.runtime_minutes,
+    still_url: ep.still_url,
+    vote_average: ep.vote_average,
+  };
+}
+
+/**
+ * A `TmdbShowDetails` is a superset of what ContinueWatching renders. The card
+ * only reads title, backdrop_url, poster_url, number_of_episodes, and seasons —
+ * all of which are denormalized onto the library row (title, backdrop_url,
+ * poster_url, total_episodes) or are not displayed (seasons). So we can build
+ * a structural shim that satisfies the type while avoiding a `getShow` call.
+ */
+function libraryRowAsShowDetails(lib: LibraryItem): TmdbShowDetails {
+  return {
+    tmdb_id: lib.tmdb_id,
+    media_type: "tv",
+    title: lib.title,
+    original_title: lib.title,
+    overview: "",
+    poster_url: lib.poster_url,
+    backdrop_url: lib.backdrop_url,
+    release_year: lib.release_year,
+    first_air_date: null,
+    last_air_date: null,
+    genres: lib.genres,
+    genre_ids: [],
+    origin_country: lib.origin_country,
+    original_language: lib.original_language,
+    runtime_minutes: lib.runtime_minutes,
+    vote_average: 0,
+    vote_count: 0,
+    popularity: 0,
+    adult: false,
+    tagline: null,
+    status: null,
+    number_of_seasons: lib.total_seasons ?? 0,
+    number_of_episodes: lib.total_episodes ?? 0,
+    in_production: false,
+    seasons: [],
+    networks: [],
+    spoken_languages: [],
+    trailer_key: null,
+  } as unknown as TmdbShowDetails;
 }
 
 export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) => {
@@ -83,52 +143,92 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) 
   const fetchContinueWatching = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await libraryApi.list({ status: "watching", type: "tv", limit: 50 });
-      const shows = res.data;
-      if (shows.length === 0) {
+      // Single call: the server inlines `next_episode` for each
+      // status=watching TV row from its media_cache (no TMDB round-trips).
+      const res = await libraryApi.list({
+        status: "watching",
+        type: "tv",
+        limit: 50,
+        include: "next_episode",
+      });
+      const rows = res.data;
+      if (rows.length === 0) {
         setItems([]);
         return;
       }
 
-      // Step 1 — fan out `getShow` for every in-progress show in parallel.
-      // `cachedFetch` ensures the Supabase edge function is only hit once per
-      // show even if this component remounts.
-      const showResults = await parallelMap(shows, 6, async (lib) => {
-        try {
-          const showRes = await mediaApi.getShow(lib.tmdb_id);
-          const next = pickNextEpisode(lib, showRes.media);
-          return next ? { lib, show: showRes.media, next } : null;
-        } catch (err) {
-          console.error("Failed to load continue-watching show", lib.tmdb_id, err);
-          return null;
-        }
-      });
+      // Fast path: every row that came with a resolved next_episode builds
+      // a card from the library row + embedded episode. No getShow, no
+      // getSeasonDetails. This is the common case after a warm cache.
+      const fastCards: ContinueWatchingCard[] = [];
+      const needsFanOut: LibraryItem[] = [];
 
-      // Step 2 — fan out season lookups for cards that need episode metadata,
-      // also in parallel. Cards that already have what they need (or where the
-      // season call fails) simply render with `episode: null`.
-      const cards = await parallelMap(
-        showResults.filter((r): r is { lib: LibraryItem; show: TmdbShowDetails; next: { seasonNumber: number; episodeNumber: number } } => r !== null),
-        6,
-        async ({ lib, show, next }) => {
-          let episode: TmdbEpisode | null = null;
-          try {
-            const season = await mediaApi.getSeasonDetails(lib.tmdb_id, next.seasonNumber);
-            episode = season.episodes.find((e) => e.episode_number === next.episodeNumber) ?? null;
-          } catch {
-            // Best-effort: render the show backdrop with "Episode N".
-          }
-          return {
+      for (const lib of rows) {
+        if (lib.next_episode) {
+          fastCards.push({
             library: lib,
-            show,
-            seasonNumber: next.seasonNumber,
-            episodeNumber: next.episodeNumber,
-            episode,
-          } satisfies ContinueWatchingCard;
-        },
-      );
+            show: libraryRowAsShowDetails(lib),
+            seasonNumber: lib.next_episode.season_number,
+            episodeNumber: lib.next_episode.episode_number,
+            episode: nextEpisodeToTmdbEpisode(lib.next_episode),
+            fromServer: true,
+          });
+        } else {
+          needsFanOut.push(lib);
+        }
+      }
 
-      setItems(cards);
+      // Slow path: cache-cold rows (server couldn't resolve next_episode).
+      // We still do the existing parallelMap fan-out for these so the user
+      // always sees a complete row. After this resolves, the next-visit
+      // server cache will be warm and they'll all take the fast path.
+      if (needsFanOut.length > 0) {
+        const showResults = await parallelMap(needsFanOut, 6, async (lib) => {
+          try {
+            const showRes = await mediaApi.getShow(lib.tmdb_id);
+            const next = pickNextEpisode(lib, showRes.media);
+            return next ? { lib, show: showRes.media, next } : null;
+          } catch (err) {
+            console.error("Failed to load continue-watching show", lib.tmdb_id, err);
+            return null;
+          }
+        });
+
+        const slowCards = await parallelMap(
+          showResults.filter(
+            (
+              r,
+            ): r is {
+              lib: LibraryItem;
+              show: TmdbShowDetails;
+              next: { seasonNumber: number; episodeNumber: number };
+            } => r !== null,
+          ),
+          6,
+          async ({ lib, show, next }) => {
+            let episode: TmdbEpisode | null = null;
+            try {
+              const season = await mediaApi.getSeasonDetails(lib.tmdb_id, next.seasonNumber);
+              episode =
+                season.episodes.find((e) => e.episode_number === next.episodeNumber) ?? null;
+            } catch {
+              // Best-effort: render the show backdrop with "Episode N".
+            }
+            return {
+              library: lib,
+              show,
+              seasonNumber: next.seasonNumber,
+              episodeNumber: next.episodeNumber,
+              episode,
+              fromServer: false,
+            } satisfies ContinueWatchingCard;
+          },
+        );
+
+        fastCards.push(...slowCards);
+      }
+
+      setItems(fastCards);
     } catch (err) {
       console.error("Failed to load Continue Watching", err);
       setItems([]);
@@ -207,6 +307,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) 
                   seasonNumber: next.seasonNumber,
                   episodeNumber: next.episodeNumber,
                   episode: nextEpisode,
+                  fromServer: false,
                 }
               : c,
           ),
@@ -223,7 +324,11 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) 
   );
 
   const totalRemaining = useMemo(
-    () => (items ?? []).reduce((sum, c) => sum + Math.max(0, c.show.number_of_episodes - c.library.episodes_watched), 0),
+    () =>
+      (items ?? []).reduce(
+        (sum, c) => sum + Math.max(0, c.show.number_of_episodes - c.library.episodes_watched),
+        0,
+      ),
     [items],
   );
 
@@ -247,7 +352,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) 
           <button
             type="button"
             onClick={() => scrollBy(-1)}
-            className="p-1.5 rounded-md bg-theme-tertiary border border-theme text-theme-secondary hover:text-theme-primary hover:border-theme-focus transition-colors"
+            className="hidden sm:inline-flex p-1.5 rounded-md bg-theme-tertiary border border-theme text-theme-secondary hover:text-theme-primary hover:border-theme-focus transition-colors"
             aria-label="Scroll left"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -255,7 +360,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) 
           <button
             type="button"
             onClick={() => scrollBy(1)}
-            className="p-1.5 rounded-md bg-theme-tertiary border border-theme text-theme-secondary hover:text-theme-primary hover:border-theme-focus transition-colors"
+            className="hidden sm:inline-flex p-1.5 rounded-md bg-theme-tertiary border border-theme text-theme-secondary hover:text-theme-primary hover:border-theme-focus transition-colors"
             aria-label="Scroll right"
           >
             <ChevronRight className="w-4 h-4" />
@@ -271,7 +376,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) 
       ) : (
         <div
           ref={scrollerRef}
-          className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scroll-smooth [scrollbar-width:thin]"
+          className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
           {items!.map((card) => {
             const key = `${card.library.tmdb_id}-${card.seasonNumber}-${card.episodeNumber}`;
@@ -286,7 +391,7 @@ export const ContinueWatching: React.FC<ContinueWatchingProps> = ({ onChange }) 
             return (
               <div
                 key={card.library.id}
-                className="snap-start shrink-0 w-64 sm:w-72 bg-theme-secondary border border-theme rounded-lg overflow-hidden flex flex-col"
+                className="snap-start shrink-0 basis-full sm:basis-72 sm:w-72 bg-theme-secondary border border-theme rounded-lg overflow-hidden flex flex-col"
               >
                 <div className="relative aspect-video bg-theme-tertiary">
                   {card.episode?.still_url ? (

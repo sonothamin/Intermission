@@ -65,6 +65,28 @@ export interface LibraryItem {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+  /**
+   * Present only when the library list was fetched with `include=next_episode`.
+   * For status=watching/rewatching TV rows, the server resolves the next-up
+   * episode from its media_cache and inlines it here. null means the user
+   * has finished the show or the server couldn't resolve it (cache cold —
+   * the client falls back to its own fan-out).
+   */
+  next_episode?: NextEpisode | null;
+}
+
+export interface NextEpisode {
+  tmdb_id: number;
+  season_number: number;
+  episode_number: number;
+  name: string;
+  overview: string;
+  air_date: string | null;
+  runtime_minutes: number | null;
+  still_url: string | null;
+  vote_average: number;
+  season_name: string;
+  episode_count_in_season: number;
 }
 
 export interface WatchlistItem {
@@ -392,6 +414,12 @@ export const libraryApi = {
     sort_dir?: "asc" | "desc";
     page?: number;
     limit?: number;
+    /**
+     * Pass `"next_episode"` to inline the next-up episode for status=watching
+     * TV rows directly on each LibraryItem as `next_episode`.
+     * Lets the Dashboard render Continue Watching with a single call.
+     */
+    include?: "next_episode";
   }) =>
     getFunction<{ data: LibraryItem[]; pagination: Pagination }>("library", opts),
 
