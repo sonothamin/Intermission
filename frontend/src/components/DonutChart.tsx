@@ -39,7 +39,7 @@ export function DonutChart<T>({
   ));
 
   return (
-    <div className="flex-1 min-h-0 relative">
+    <div className="h-full relative">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
