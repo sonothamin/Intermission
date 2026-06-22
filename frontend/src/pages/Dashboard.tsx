@@ -14,6 +14,7 @@ import { ChartTooltip } from "../components/ChartTooltip";
 import { DonutChart } from "../components/DonutChart";
 import { EmptyChartState } from "../components/EmptyChartState";
 import { HorizontalBarChart } from "../components/HorizontalBarChart";
+import { ContinueWatching } from "../components/ContinueWatching";
 import { chartAxisStroke, chartGridStroke } from "../lib/chartTheme";
 
 const getFlagEmoji = (countryCode: string) => {
@@ -159,6 +160,9 @@ export const Dashboard: React.FC = () => {
           hint={<>{summary.watchlist_count} on watchlist</>}
         />
       </div>
+
+      {/* Continue Watching — one card per in-progress show */}
+      <ContinueWatching onChange={fetchData} />
 
       {/* Middle Row: Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
