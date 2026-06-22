@@ -93,19 +93,16 @@ export const Layout: React.FC = () => {
 
       {/* Sidebar for Desktop/Tablet */}
       <aside
-        className={`hidden md:flex flex-shrink-0 flex-col transition-all duration-200 ${
+        className={`hidden md:flex flex-shrink-0 flex-col shell-glass transition-all duration-200 ${
           collapsed ? "w-[4.5rem]" : "w-64"
         }`}
-        style={{
-          background: "var(--bg-secondary)",
-          borderRight: "1px solid var(--border-subtle)",
-        }}
+        style={{ borderRightWidth: "1px", borderRightStyle: "solid" }}
       >
         <div
-          className={`flex items-center ${
+          className={`flex items-center shell-glass-divider ${
             collapsed ? "justify-center p-4" : "justify-between p-4 pl-6"
           }`}
-          style={{ borderBottom: "1px solid var(--border-subtle)" }}
+          style={{ borderBottomWidth: "1px", borderBottomStyle: "solid" }}
         >
           <Link to="/" className="flex items-center gap-3 min-w-0">
             <Film className="w-8 h-8 text-[#10b981] flex-shrink-0" />
@@ -183,8 +180,8 @@ export const Layout: React.FC = () => {
         </nav>
 
         <div
-          className={`${collapsed ? "p-2" : "p-4"}`}
-          style={{ borderTop: "1px solid var(--border-subtle)" }}
+          className={`${collapsed ? "p-2" : "p-4"} shell-glass-divider`}
+          style={{ borderTopWidth: "1px", borderTopStyle: "solid" }}
         >
           {collapsed ? (
             <div className="flex justify-center mb-2">
@@ -254,11 +251,8 @@ export const Layout: React.FC = () => {
 
       {/* Top Bar for Mobile */}
       <header
-        className="fixed top-0 left-0 right-0 h-14 backdrop-blur-md z-40 flex items-center justify-between px-4 md:hidden"
-        style={{
-          background: "var(--glass-bg)",
-          borderBottom: "1px solid var(--border-subtle)",
-        }}
+        className="fixed top-0 left-0 right-0 h-14 backdrop-blur-md z-40 flex items-center justify-between px-4 md:hidden shell-glass"
+        style={{ borderBottomWidth: "1px", borderBottomStyle: "solid" }}
       >
         <Link to="/" className="flex items-center gap-2">
           <Film className="w-6 h-6 text-[#10b981]" />
@@ -399,11 +393,8 @@ export const Layout: React.FC = () => {
 
       {/* Bottom Navigation for Mobile */}
       <nav
-        className="fixed bottom-0 left-0 right-0 h-16 backdrop-blur-md z-40 flex items-center justify-around px-2 md:hidden"
-        style={{
-          background: "var(--glass-bg)",
-          borderTop: "1px solid var(--border-subtle)",
-        }}
+        className="fixed bottom-0 left-0 right-0 h-16 backdrop-blur-md z-40 flex items-center justify-around px-2 md:hidden shell-glass"
+        style={{ borderTopWidth: "1px", borderTopStyle: "solid" }}
       >
         {navItems.map((item) => {
           const isActive =
