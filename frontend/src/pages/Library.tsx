@@ -252,8 +252,8 @@ export const Library: React.FC = () => {
               <div ref={scrollContainerRef} className="flex-1 overflow-auto p-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                   {filteredItems.map(item => (
-                    <div key={item.id} className="relative group rounded-lg overflow-hidden bg-theme-secondary border border-theme hover:border-theme-focus transition-colors flex flex-col h-full">
-                      <Link to={mediaPath(item.media_type, item.tmdb_id)} className="block aspect-[2/3] bg-theme-tertiary relative">
+                    <div key={item.id} className="relative group rounded-lg bg-theme-secondary border border-theme hover:border-theme-focus transition-colors flex flex-col h-full">
+                      <Link to={mediaPath(item.media_type, item.tmdb_id)} className="block aspect-[2/3] bg-theme-tertiary relative rounded-t-lg overflow-hidden">
                         {item.poster_url ? (
                           <img src={item.poster_url} alt={item.title} className="w-full h-full object-cover" />
                         ) : (
@@ -276,7 +276,7 @@ export const Library: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="absolute top-2 right-2 z-10">
+                      <div className="absolute top-2 right-2 z-30">
                         <button 
                           onClick={(e) => { e.preventDefault(); setActiveMenuId(activeMenuId === item.id ? null : item.id); }}
                           className={`p-1.5 rounded-full transition-all bg-black/50 text-theme-primary hover:bg-black/80 backdrop-blur`}
@@ -322,7 +322,7 @@ export const Library: React.FC = () => {
 
             {viewMode === "list" && (
               <div ref={scrollContainerRef} className="flex-1 overflow-auto flex flex-col">
-                <table className="dense-table w-full">
+                <table className="dense-table w-full table-fixed">
                   <thead className="bg-theme-secondary sticky top-0 z-10 shadow-sm border-b border-theme">
                     <tr>
                       <th className="w-16">Poster</th>
@@ -331,7 +331,7 @@ export const Library: React.FC = () => {
                       <th className="w-40">Status</th>
                       <th className="w-32">Progress</th>
                       <th className="w-32">Rating</th>
-                      <th className="w-40">Watched</th>
+                      <th className="w-48 whitespace-nowrap">Watched</th>
                       <th className="w-32 text-right">Updated</th>
                       <th className="w-12"></th>
                     </tr>
@@ -418,20 +418,20 @@ export const Library: React.FC = () => {
                           >
                             <div className="flex items-center gap-1.5">
                               <Calendar className="w-3.5 h-3.5 text-theme-muted group-hover/dates:text-[#10b981]" />
-                              <div className="flex flex-col leading-tight">
+                              <div className="flex flex-col leading-tight whitespace-nowrap">
                                 <span className={item.started_at ? "text-theme-primary" : "text-theme-muted"}>
                                   {item.started_at ? `${format(new Date(item.started_at), "MMM d, yyyy")}` : "Not started"}
                                 </span>
                                 {item.media_type === "movie" && (
                                   <span className={item.completed_at ? "text-theme-primary" : "text-theme-muted"}>
-                                    {item.completed_at ? `Finished ${format(new Date(item.completed_at), "MMM d, yyyy")}` : "—"}
+                                    {item.completed_at ? `${format(new Date(item.completed_at), "MMM d, yyyy")}` : "—"}
                                   </span>
                                 )}
                               </div>
                             </div>
                           </button>
                         </td>
-                        <td className="text-right text-xs text-theme-muted">
+                        <td className="text-right text-xs text-theme-muted whitespace-nowrap">
                           {format(new Date(item.updated_at), "MMM d, yyyy")}
                         </td>
                         <td className="text-center relative">
