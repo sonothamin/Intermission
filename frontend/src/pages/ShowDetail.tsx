@@ -13,7 +13,7 @@ import {
 import { formatRuntime } from "../lib/media";
 import { MediaHero, MetaChip, RatingBadge } from "../components/MediaHero";
 import { MediaActions } from "../components/MediaActions";
-import { CastCrew } from "../components/CastCrew";
+import { ExternalLinks } from "../components/ExternalLinks";
 import {
   Loader2,
   Calendar,
@@ -388,8 +388,6 @@ export const ShowDetail: React.FC = () => {
             </section>
           )}
 
-          <CastCrew cast={show.cast} crew={show.crew} />
-
           <section className="dense-card">
             <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-4">
               Seasons
@@ -632,6 +630,19 @@ export const ShowDetail: React.FC = () => {
               )}
             </dl>
           </section>
+
+          {(show.external_ids || show.homepage) && (
+            <section className="dense-card">
+              <h2 className="text-sm font-semibold text-theme-primary uppercase tracking-wider mb-3">
+                Links
+              </h2>
+              <ExternalLinks
+                externalIds={show.external_ids}
+                homepage={show.homepage}
+                className="flex-col items-stretch gap-2 [&>a]:justify-start"
+              />
+            </section>
+          )}
         </div>
       </div>
     </div>
