@@ -503,7 +503,9 @@ export async function searchMedia(
 }
 
 export async function getMovieDetails(tmdbId: number, language = "en-US"): Promise<TmdbMovie> {
-  const cacheKey = `movie:${tmdbId}:${language}`;
+  // v2: response shape now includes cast/crew/external_ids via append_to_response.
+  // Bumping the prefix invalidates older media_cache rows that pre-date this fix.
+  const cacheKey = `movie:v2:${tmdbId}:${language}`;
   const cached = await getFromCache<TmdbMovie>(cacheKey);
   if (cached) return cached;
 
@@ -519,7 +521,9 @@ export async function getMovieDetails(tmdbId: number, language = "en-US"): Promi
 }
 
 export async function getShowDetails(tmdbId: number, language = "en-US"): Promise<TmdbShow> {
-  const cacheKey = `tv:${tmdbId}:${language}`;
+  // v2: response shape now includes cast/crew/external_ids via append_to_response.
+  // Bumping the prefix invalidates older media_cache rows that pre-date this fix.
+  const cacheKey = `tv:v2:${tmdbId}:${language}`;
   const cached = await getFromCache<TmdbShow>(cacheKey);
   if (cached) return cached;
 

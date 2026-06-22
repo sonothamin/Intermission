@@ -410,7 +410,9 @@ export const searchApi = {
 export const mediaApi = {
   getMovie: (tmdbId: number, language?: string) =>
     cachedFetch(
-      `media-details:movie:${tmdbId}:${language ?? "en-US"}`,
+      // v2: aligns with the server-side cache bump that adds cast/crew/external_ids.
+      // Old sessionStorage entries (pre-fix) are ignored, forcing a fresh fetch.
+      `media-details:movie:v2:${tmdbId}:${language ?? "en-US"}`,
       () => getFunction<{ media: TmdbMovieDetails; user_entry: LibraryItem | null; episode_progress: null }>(
         "media-details",
         { tmdb_id: tmdbId, type: "movie", language },
@@ -419,7 +421,9 @@ export const mediaApi = {
 
   getShow: (tmdbId: number, language?: string) =>
     cachedFetch(
-      `media-details:tv:${tmdbId}:${language ?? "en-US"}`,
+      // v2: aligns with the server-side cache bump that adds cast/crew/external_ids.
+      // Old sessionStorage entries (pre-fix) are ignored, forcing a fresh fetch.
+      `media-details:tv:v2:${tmdbId}:${language ?? "en-US"}`,
       () => getFunction<{ media: TmdbShowDetails; user_entry: LibraryItem | null; episode_progress: EpisodeProgress[] | null }>(
         "media-details",
         { tmdb_id: tmdbId, type: "tv", language },
