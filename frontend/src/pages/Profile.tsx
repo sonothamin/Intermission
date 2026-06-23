@@ -107,6 +107,42 @@ export const Profile: React.FC = () => {
   const [libraryTotal, setLibraryTotal] = useState(0);
   const [libraryLoading, setLibraryLoading] = useState(false);
 
+  // Re-fetch the profile and reconcile local state with server truth. Used
+  // both as the initial load and after any friend action so that
+  // `friendStatus` (and the library gating that depends on it) stays in
+  // sync — previously the page only set state on send/cancel/accept/unfriend
+  // optimistically, so a 409 ("already friends") or any other server-side
+  // divergence would leave the UI stuck on the wrong button forever.
+  const refreshProfile = useCallback(
+    async (opts?: { silent?: boolean }): Promise<FriendStatus | null> => {
+      if (!username) return null;
+      try {
+        const res = await profileApi.getByUsername(username);
+        setProfile(res.profile);
+        setStats(res.stats ?? null);
+        const next: FriendStatus | null = res.friend_status ?? null;
+        setFriendStatus(next);
+        // The server doesn't surface the row id through the profile endpoint;
+        // for the `accepted` case we don't need it.
+        if (next === "accepted") setFriendshipId(null);
+        return next;
+      } catch (err: any) {
+        if (!opts?.silent) {
+          const msg = (err?.message ?? "").toLowerCase();
+          if (msg.includes("not found")) {
+            setError("not_found");
+          } else if (msg.includes("access denied") || msg.includes("forbidden")) {
+            setError("private");
+          } else {
+            setError("unknown");
+          }
+        }
+        return null;
+      }
+    },
+    [username],
+  );
+
   useEffect(() => {
     let active = true;
 
@@ -124,40 +160,7 @@ export const Profile: React.FC = () => {
     setFriendshipId(null);
     setLibraryItems([]);
 
-    profileApi
-      .getByUsername(username)
-      .then((res) => {
-        if (!active) return;
-        setProfile(res.profile);
-        setStats(res.stats ?? null);
-        setFriendStatus(res.friend_status ?? null);
-        // The server returns friend_status: null for the viewer's own profile.
-        // For other viewers it returns the directional status. We don't have
-        // the friendship id here (the profile endpoint doesn't surface it);
-        // accept/decline on a profile is therefore surfaced through the
-        // accept flow but the friendship id is looked up below when needed.
-        if (res.friend_status === "accepted") {
-          setFriendshipId(null);
-        }
-      })
-      .catch((err: Error) => {
-        if (!active) return;
-        // The backend uses a generic "Access denied" message for both private
-        // profiles and missing ones. Distinguish them by HTTP status when
-        // possible — we surfaced the underlying message via err.message.
-        const msg = (err?.message ?? "").toLowerCase();
-        if (msg.includes("not found")) {
-          setError("not_found");
-        } else if (msg.includes("access denied") || msg.includes("forbidden")) {
-          setError("private");
-        } else {
-          setError("unknown");
-        }
-        setProfile(null);
-        setStats(null);
-        setFriendStatus(null);
-        setFriendshipId(null);
-      })
+    refreshProfile()
       .finally(() => {
         if (active) setLoading(false);
       });
@@ -165,7 +168,7 @@ export const Profile: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [username]);
+  }, [username, refreshProfile]);
 
   // When we know the relationship, decide whether to load the library preview.
   // Owners always see their own library; non-owners only see it if they're
@@ -239,7 +242,18 @@ export const Profile: React.FC = () => {
         setFriendStatus("pending_outgoing");
         toast.success(`Friend request sent to @${profile.username ?? "user"}.`);
       } catch (err: any) {
-        toast.error(err?.message ?? "Couldn't send friend request.");
+        const msg = (err?.message ?? "").toLowerCase();
+        // The local state was stale — server says we're already friends (or a
+        // request already exists). Re-sync the UI from server truth instead
+        // of leaving the user stuck on a button that will keep 409-ing.
+        if (msg.includes("already friend") || msg.includes("already exists")) {
+          await refreshProfile();
+          toast(msg.includes("already friend")
+            ? `You're already friends with @${profile.username ?? "this user"}.`
+            : "A friend request is already pending.");
+        } else {
+          toast.error(err?.message ?? "Couldn't send friend request.");
+        }
       } finally {
         setFriendActionPending(false);
       }
@@ -262,6 +276,9 @@ export const Profile: React.FC = () => {
         toast.success("Friend request cancelled.");
       } catch (err: any) {
         toast.error(err?.message ?? "Couldn't cancel friend request.");
+        // Re-sync from server in case the state diverged (e.g. they accepted
+        // the request while we were trying to cancel).
+        await refreshProfile();
       } finally {
         setFriendActionPending(false);
       }
@@ -276,13 +293,18 @@ export const Profile: React.FC = () => {
         const id = await ensureIncomingFriendshipId();
         if (!id) {
           toast.error("Couldn't find that request anymore.");
+          await refreshProfile();
           return;
         }
         await socialApi.respondRequest(id, true);
         setFriendStatus("accepted");
         toast.success(`You're now friends with @${profile.username ?? "user"}.`);
+        // Re-fetch so the server-canonical friend_status wins; the library
+        // effect will pick up the change on its own.
+        await refreshProfile({ silent: true });
       } catch (err: any) {
         toast.error(err?.message ?? "Couldn't accept request.");
+        await refreshProfile();
       } finally {
         setFriendActionPending(false);
       }
@@ -302,8 +324,10 @@ export const Profile: React.FC = () => {
         await socialApi.unfriend(profile.id);
         setFriendStatus("none");
         toast.success("Friend removed.");
+        await refreshProfile({ silent: true });
       } catch (err: any) {
         toast.error(err?.message ?? "Couldn't remove friend.");
+        await refreshProfile();
       } finally {
         setFriendActionPending(false);
       }
@@ -317,13 +341,16 @@ export const Profile: React.FC = () => {
       const id = await ensureIncomingFriendshipId();
       if (!id) {
         toast.error("Couldn't find that request anymore.");
+        await refreshProfile();
         return;
       }
       await socialApi.respondRequest(id, false);
       setFriendStatus("none");
       toast.success("Friend request declined.");
+      await refreshProfile({ silent: true });
     } catch (err: any) {
       toast.error(err?.message ?? "Couldn't decline request.");
+      await refreshProfile();
     } finally {
       setFriendActionPending(false);
     }

@@ -46,6 +46,8 @@ COMMENT ON FUNCTION public.is_accepted_friend(UUID, UUID) IS
 -- library: read self OR read an accepted friend
 -- ---------------------------------------------------------------------------
 DROP POLICY IF EXISTS "library_select_own" ON public.library;
+DROP POLICY IF EXISTS "library_select_own_or_friend" ON public.library;
+DROP POLICY IF EXISTS "library_select_self_or_friend" ON public.library;
 CREATE POLICY "library_select_self_or_friend"
   ON public.library FOR SELECT
   USING (
@@ -57,6 +59,7 @@ CREATE POLICY "library_select_self_or_friend"
 -- episode_progress: read self OR read an accepted friend
 -- ---------------------------------------------------------------------------
 DROP POLICY IF EXISTS "ep_progress_select_own" ON public.episode_progress;
+DROP POLICY IF EXISTS "ep_progress_select_self_or_friend" ON public.episode_progress;
 CREATE POLICY "ep_progress_select_self_or_friend"
   ON public.episode_progress FOR SELECT
   USING (
@@ -68,6 +71,7 @@ CREATE POLICY "ep_progress_select_self_or_friend"
 -- watchlist: read self OR read an accepted friend
 -- ---------------------------------------------------------------------------
 DROP POLICY IF EXISTS "watchlist_select_own" ON public.watchlist;
+DROP POLICY IF EXISTS "watchlist_select_self_or_friend" ON public.watchlist;
 CREATE POLICY "watchlist_select_self_or_friend"
   ON public.watchlist FOR SELECT
   USING (
