@@ -479,6 +479,11 @@ export const libraryApi = {
      * Lets the Dashboard render Continue Watching with a single call.
      */
     include?: "next_episode";
+    /**
+     * View another user's library. Only accepted friends may pass a non-own
+     * id; the server enforces this with a 403 otherwise.
+     */
+    user_id?: string;
   }) =>
     getFunction<{ data: LibraryItem[]; pagination: Pagination }>("library", opts),
 
@@ -589,9 +594,36 @@ export const analyticsApi = {
 // Profile API
 // ---------------------------------------------------------------------------
 
+/**
+ * Relationship from the viewer's perspective to the profile owner. `null`
+ * means the viewer is the owner (no relationship concept applies). Otherwise
+ * reflects the state in the `friendships` table.
+ */
+export type FriendStatus =
+  | "none"
+  | "pending_incoming"
+  | "pending_outgoing"
+  | "accepted"
+  | "blocked";
+
+export interface ProfileResponse {
+  profile: UserProfile;
+  stats: any;
+  settings: UserSettings | null;
+  /**
+   * Relationship of the requesting user to the profile owner.
+   * `null` when the requester is the owner; `'none'` when no relationship
+   * exists; `'pending_incoming'` / `'pending_outgoing'` reflect the direction
+   * of an outstanding request; `'accepted'` means they are friends; `'blocked'`
+   * means the owner has blocked the requester (the API will normally 403 in
+   * that case, but the value is included for completeness).
+   */
+  friend_status: FriendStatus | null;
+}
+
 export const profileApi = {
   get: (userId?: string) =>
-    getFunction<{ profile: UserProfile; stats: any; settings: UserSettings | null }>(
+    getFunction<ProfileResponse>(
       "profile",
       userId ? { user_id: userId } : undefined,
     ),
@@ -601,7 +633,7 @@ export const profileApi = {
    * Mirrors `get` but looks the user up by their unique handle instead of id.
    */
   getByUsername: (username: string) =>
-    getFunction<{ profile: UserProfile; stats: any; settings: UserSettings | null }>(
+    getFunction<ProfileResponse>(
       "profile",
       { username },
     ),
@@ -779,5 +811,123 @@ export const accountApi = {
       "account",
       "DELETE",
       { confirm: "DELETE MY ACCOUNT" },
+    ),
+};
+
+// ---------------------------------------------------------------------------
+// Social / Friends API
+// ---------------------------------------------------------------------------
+
+/**
+ * Slim user shape returned alongside friendship rows. Distinct from
+ * `UserProfile` because we never want to leak private fields (bio, location,
+ * website, email) over the friend graph — only the columns used by friend
+ * lists and the people picker.
+ */
+export interface FriendUser {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
+export interface FriendshipRow {
+  friendship_id: string;
+  status: "pending" | "accepted" | "declined" | "blocked";
+  requested_by: string;
+  created_at: string;
+  responded_at: string | null;
+  user: FriendUser;
+}
+
+/**
+ * Shape returned by `socialApi.search` — wider than `FriendUser` because it
+ * also surfaces `bio` (for cards) and `is_public` so the UI can show a
+ * lock icon when needed.
+ */
+export interface SocialSearchResult {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  is_public: boolean;
+}
+
+export const socialApi = {
+  /**
+   * List the user's accepted friends with the other side's profile inlined.
+   */
+  listFriends: () =>
+    getFunction<{ friends: FriendshipRow[] }>("social", { action: "friends" }),
+
+  /**
+   * List pending friend requests. `type` controls direction:
+   *   - `'incoming'`  → requests sent TO the current user
+   *   - `'outgoing'`  → requests the current user sent to others
+   */
+  listRequests: (type: "incoming" | "outgoing" = "incoming") =>
+    getFunction<{ requests: FriendshipRow[] }>("social", {
+      action: "requests",
+      type,
+    }),
+
+  /**
+   * Public profile search for the "Find People" picker. Excludes the caller
+   * and never returns private profiles.
+   */
+  searchUsers: (q: string) =>
+    getFunction<{ users: SocialSearchResult[] }>("social", {
+      action: "search",
+      q,
+    }),
+
+  /**
+   * Send a friend request. Pass either `user_id` or `username` — the server
+   * resolves whichever is provided. Re-opening a previously declined pair is
+   * handled server-side.
+   */
+  sendRequest: (target: { user_id?: string; username?: string }) =>
+    mutateFunction<{ friendship: FriendshipRow }>(
+      "social",
+      "POST",
+      target,
+      { action: "request" },
+    ),
+
+  /**
+   * Accept (`accept: true`) or decline (`accept: false`) an incoming friend
+   * request. Only the recipient may call this; the server enforces that.
+   */
+  respondRequest: (friendshipId: string, accept: boolean) =>
+    mutateFunction<{ friendship: FriendshipRow }>(
+      "social",
+      "POST",
+      { friendship_id: friendshipId, accept },
+      { action: "respond" },
+    ),
+
+  /**
+   * Cancel an outgoing pending request. Only the original requester may call
+   * this — accepting the same request would be `respondRequest`.
+   */
+  cancelRequest: (friendshipId: string) =>
+    mutateFunction<{ success: boolean }>(
+      "social",
+      "DELETE",
+      undefined,
+      { action: "request", id: friendshipId },
+    ),
+
+  /**
+   * Remove an accepted friendship. Either party may call this; the server
+   * scopes the delete to the matching pair.
+   */
+  unfriend: (userId: string) =>
+    mutateFunction<{ success: boolean }>(
+      "social",
+      "DELETE",
+      undefined,
+      { action: "friend", id: userId },
     ),
 };

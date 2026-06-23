@@ -49,6 +49,11 @@ const ShowDetail = lazy(() =>
 const ContinueRatingPage = lazy(() =>
   import("./pages/ContinueRating").then((m) => ({ default: m.ContinueRating }))
 );
+// Friends — the social/friends management page (4 tabs: friends, incoming,
+// outgoing, find). Lazy-loaded like the rest of the protected app.
+const FriendsPage = lazy(() =>
+  import("./pages/Friends").then((m) => ({ default: m.Friends }))
+);
 // Public profile view at /u/:username. Lives inside the dashboard layout so
 // the sidebar/topbar stay visible — the page is reachable by any signed-in
 // user (the edge function enforces the is_public privacy flag for other
@@ -152,6 +157,10 @@ const AppInner = () => (
                 layout so the sidebar + topbar stay visible, matching the rest
                 of the protected app. */}
             <Route path="continue-rating" element={<ContinueRatingPage />} />
+            {/* Friends management — list, incoming/outgoing requests, and
+                search. Lives inside the dashboard layout for consistent
+                chrome. */}
+            <Route path="friends" element={<FriendsPage />} />
             {/* Public profile view. The sidebar's avatar links to /u/{username}
                 for the signed-in user; this route also resolves any other
                 handle shared via link. The edge function enforces the

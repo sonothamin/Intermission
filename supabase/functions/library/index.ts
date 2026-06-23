@@ -10,13 +10,14 @@
 import { handleCors, corsHeaders } from "../_shared/cors.ts";
 import {
   badRequest,
+  forbidden,
   notFound,
   conflict,
   internalError,
   methodNotAllowed,
 } from "../_shared/errors.ts";
 import { getAuthUser } from "../_shared/auth.ts";
-import { getUserClient } from "../_shared/db.ts";
+import { getUserClient, getAdminClient } from "../_shared/db.ts";
 import { getMovieDetails, getShowDetails, getFromCache } from "../_shared/tmdb.ts";
 import type { TmdbShow, TmdbSeason, TmdbEpisode } from "../_shared/tmdb.ts";
 import {
@@ -149,9 +150,15 @@ Deno.serve(async (req: Request) => {
   const params = url.searchParams;
 
   try {
-    // ─────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────
     // GET — paginated library list
-    // ─────────────────────────────────────────────────────────────────────────
+    //
+    // Default scope is the caller's own library. When ?user_id=<otherUser> is
+    // supplied the viewer must be an accepted friend of that user; RLS on
+    // library will still filter rows appropriately, but we surface a clean 403
+    // here when the relationship is missing so the client doesn't get an
+    // empty result with no signal.
+    // ───────────────────────────────────────────────────────────────────────
     if (req.method === "GET") {
       const status = params.get("status");
       const type = params.get("type");
@@ -163,6 +170,25 @@ Deno.serve(async (req: Request) => {
       const page = Math.max(1, parseInt(params.get("page") ?? "1", 10));
       const limit = Math.min(100, Math.max(1, parseInt(params.get("limit") ?? "20", 10)));
       const from = (page - 1) * limit;
+
+      // Resolve target user: caller by default, or ?user_id for a friend view.
+      const requestedUserId = params.get("user_id");
+      let targetUserId = user.id;
+      if (requestedUserId && requestedUserId !== user.id) {
+        const [a, b] = user.id < requestedUserId
+          ? [user.id, requestedUserId]
+          : [requestedUserId, user.id];
+        const { data: fr } = await getAdminClient()
+          .from("friendships")
+          .select("status")
+          .eq("user_a_id", a)
+          .eq("user_b_id", b)
+          .maybeSingle();
+        if (!fr || fr.status !== "accepted") {
+          return forbidden(origin);
+        }
+        targetUserId = requestedUserId;
+      }
 
       const validSortFields = ["updated_at", "created_at", "rating", "title", "release_year", "times_watched"];
       if (!validSortFields.includes(sortBy)) {
@@ -176,7 +202,7 @@ Deno.serve(async (req: Request) => {
       let query = db
         .from("library")
         .select("*", { count: "exact" })
-        .eq("user_id", user.id);
+        .eq("user_id", targetUserId);
 
       if (status) {
         if (!VALID_STATUSES.includes(status as WatchStatus)) {

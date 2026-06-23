@@ -119,8 +119,38 @@ Deno.serve(async (req: Request) => {
       if (profErr) throw profErr;
       if (!profile) return notFound("Profile", origin);
 
-      // Enforce privacy — if profile is private and not own, deny
-      if (!profile.is_public && !isOwnProfile) {
+      // Compute viewer ↔ target friendship state. `are_friends` and friends
+      // lookup use the admin client because RLS only lets participants see
+      // friendship rows, and we don't want to fail here when the viewer is
+      // not yet a friend.
+      let friendStatus: "none" | "pending_incoming" | "pending_outgoing" | "accepted" | "blocked" = "none";
+      if (requestingUser && !isOwnProfile) {
+        const adminDb = getAdminClient();
+        const [a, b] = requestingUser.id < userId
+          ? [requestingUser.id, userId]
+          : [userId, requestingUser.id];
+
+        const { data: fr } = await adminDb
+          .from("friendships")
+          .select("id, status, requested_by")
+          .eq("user_a_id", a)
+          .eq("user_b_id", b)
+          .maybeSingle();
+
+        if (fr) {
+          if (fr.status === "accepted") friendStatus = "accepted";
+          else if (fr.status === "blocked") friendStatus = "blocked";
+          else if (fr.status === "pending") {
+            friendStatus = fr.requested_by === requestingUser.id
+              ? "pending_outgoing"
+              : "pending_incoming";
+          }
+        }
+      }
+
+      // Enforce privacy — private profiles are visible to accepted friends only.
+      const isAcceptedFriend = friendStatus === "accepted";
+      if (!profile.is_public && !isOwnProfile && !isAcceptedFriend) {
         return forbidden(origin);
       }
 
@@ -143,7 +173,12 @@ Deno.serve(async (req: Request) => {
       }
 
       return new Response(
-        JSON.stringify({ profile, stats: stats ?? null, settings }),
+        JSON.stringify({
+          profile,
+          stats: stats ?? null,
+          settings,
+          friend_status: isOwnProfile ? null : friendStatus,
+        }),
         {
           status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders(origin) },

@@ -16,6 +16,7 @@ import {
   Moon,
   Sun,
   User,
+  Users,
 } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { useTheme, type Theme } from "../context/ThemeContext";
@@ -75,6 +76,7 @@ export const Layout: React.FC = () => {
     { name: "Search", path: "/dashboard/search", icon: Search },
     { name: "Library", path: "/dashboard/library", icon: Library },
     { name: "Watchlist", path: "/dashboard/watchlist", icon: ListPlus },
+    { name: "Friends", path: "/dashboard/friends", icon: Users },
     { name: "Settings", path: "/dashboard/settings", icon: Settings },
   ];
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   Globe,
@@ -13,10 +13,24 @@ import {
   Film as FilmIcon,
   Tv as TvIcon,
   Trophy as TrophyIcon,
+  UserPlus,
+  UserCheck,
+  Check,
+  X as XIcon,
+  Archive,
 } from "lucide-react";
-import { profileApi, UserProfile } from "../lib/api";
+import { toast } from "react-hot-toast";
+import {
+  profileApi,
+  UserProfile,
+  FriendStatus,
+  libraryApi,
+  LibraryItem,
+  socialApi,
+} from "../lib/api";
 import { StatCard } from "../components/StatCard";
 import { useAuth } from "../context/AuthContext";
+import { mediaPath } from "../lib/media";
 
 interface WatchStats {
   movies_watched?: number;
@@ -81,8 +95,17 @@ export const Profile: React.FC = () => {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<WatchStats | null>(null);
+  const [friendStatus, setFriendStatus] = useState<FriendStatus | null>(null);
+  const [friendshipId, setFriendshipId] = useState<string | null>(null);
+  const [friendActionPending, setFriendActionPending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<"not_found" | "private" | "unknown" | null>(null);
+
+  // Library preview — only fetched when the viewer is allowed to see it
+  // (own profile, or an accepted friend of a public profile).
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
+  const [libraryTotal, setLibraryTotal] = useState(0);
+  const [libraryLoading, setLibraryLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -95,6 +118,11 @@ export const Profile: React.FC = () => {
 
     setLoading(true);
     setError(null);
+    setProfile(null);
+    setStats(null);
+    setFriendStatus(null);
+    setFriendshipId(null);
+    setLibraryItems([]);
 
     profileApi
       .getByUsername(username)
@@ -102,6 +130,15 @@ export const Profile: React.FC = () => {
         if (!active) return;
         setProfile(res.profile);
         setStats(res.stats ?? null);
+        setFriendStatus(res.friend_status ?? null);
+        // The server returns friend_status: null for the viewer's own profile.
+        // For other viewers it returns the directional status. We don't have
+        // the friendship id here (the profile endpoint doesn't surface it);
+        // accept/decline on a profile is therefore surfaced through the
+        // accept flow but the friendship id is looked up below when needed.
+        if (res.friend_status === "accepted") {
+          setFriendshipId(null);
+        }
       })
       .catch((err: Error) => {
         if (!active) return;
@@ -118,6 +155,8 @@ export const Profile: React.FC = () => {
         }
         setProfile(null);
         setStats(null);
+        setFriendStatus(null);
+        setFriendshipId(null);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -127,6 +166,168 @@ export const Profile: React.FC = () => {
       active = false;
     };
   }, [username]);
+
+  // When we know the relationship, decide whether to load the library preview.
+  // Owners always see their own library; non-owners only see it if they're
+  // an accepted friend. The "self viewing private profile" case is already
+  // handled by the profile endpoint returning the data.
+  const canViewLibrary = !!profile && (
+    ownProfile?.id === profile.id || friendStatus === "accepted"
+  );
+
+  useEffect(() => {
+    if (!canViewLibrary || !profile) return;
+    let active = true;
+    setLibraryLoading(true);
+    libraryApi
+      .list({
+        user_id: profile.id,
+        page: 1,
+        limit: 12,
+        sort_by: "updated_at",
+        sort_dir: "desc",
+      })
+      .then((res) => {
+        if (!active) return;
+        setLibraryItems(res.data ?? []);
+        setLibraryTotal(res.pagination?.total ?? res.data?.length ?? 0);
+      })
+      .catch((err) => {
+        console.error("Failed to load library preview", err);
+        if (!active) return;
+        setLibraryItems([]);
+        setLibraryTotal(0);
+      })
+      .finally(() => {
+        if (active) setLibraryLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [canViewLibrary, profile]);
+
+  /**
+   * Look up the friendship id for a pending_incoming request so we can accept
+   * or decline from the profile page itself. Done lazily because the
+   * profile endpoint doesn't return the row id and we only need it for this
+   * one status.
+   */
+  const ensureIncomingFriendshipId = useCallback(async (): Promise<string | null> => {
+    if (friendStatus !== "pending_incoming") return null;
+    if (friendshipId) return friendshipId;
+    try {
+      const res = await socialApi.listRequests("incoming");
+      const match = (res.requests ?? []).find(
+        (r) => profile && r.user.id === profile.id,
+      );
+      if (match) {
+        setFriendshipId(match.friendship_id);
+        return match.friendship_id;
+      }
+    } catch (err) {
+      console.error("Failed to look up incoming request", err);
+    }
+    return null;
+  }, [friendStatus, friendshipId, profile]);
+
+  const handleFriendAction = async () => {
+    if (!profile || friendActionPending) return;
+    if (friendStatus === "none") {
+      setFriendActionPending(true);
+      try {
+        await socialApi.sendRequest({ user_id: profile.id });
+        setFriendStatus("pending_outgoing");
+        toast.success(`Friend request sent to @${profile.username ?? "user"}.`);
+      } catch (err: any) {
+        toast.error(err?.message ?? "Couldn't send friend request.");
+      } finally {
+        setFriendActionPending(false);
+      }
+      return;
+    }
+
+    if (friendStatus === "pending_outgoing") {
+      // Outgoing — clicking cancels. We need the row id from the outgoing
+      // list.
+      setFriendActionPending(true);
+      try {
+        const res = await socialApi.listRequests("outgoing");
+        const match = (res.requests ?? []).find(
+          (r) => r.user.id === profile.id,
+        );
+        if (match) {
+          await socialApi.cancelRequest(match.friendship_id);
+        }
+        setFriendStatus("none");
+        toast.success("Friend request cancelled.");
+      } catch (err: any) {
+        toast.error(err?.message ?? "Couldn't cancel friend request.");
+      } finally {
+        setFriendActionPending(false);
+      }
+      return;
+    }
+
+    if (friendStatus === "pending_incoming") {
+      // Default action for an incoming request is "Accept" — decline is a
+      // separate, secondary button next to it.
+      setFriendActionPending(true);
+      try {
+        const id = await ensureIncomingFriendshipId();
+        if (!id) {
+          toast.error("Couldn't find that request anymore.");
+          return;
+        }
+        await socialApi.respondRequest(id, true);
+        setFriendStatus("accepted");
+        toast.success(`You're now friends with @${profile.username ?? "user"}.`);
+      } catch (err: any) {
+        toast.error(err?.message ?? "Couldn't accept request.");
+      } finally {
+        setFriendActionPending(false);
+      }
+      return;
+    }
+
+    if (friendStatus === "accepted") {
+      if (
+        !window.confirm(
+          `Remove @${profile.username ?? "this user"} as a friend?`,
+        )
+      ) {
+        return;
+      }
+      setFriendActionPending(true);
+      try {
+        await socialApi.unfriend(profile.id);
+        setFriendStatus("none");
+        toast.success("Friend removed.");
+      } catch (err: any) {
+        toast.error(err?.message ?? "Couldn't remove friend.");
+      } finally {
+        setFriendActionPending(false);
+      }
+    }
+  };
+
+  const handleDeclineIncoming = async () => {
+    if (!profile || friendActionPending) return;
+    setFriendActionPending(true);
+    try {
+      const id = await ensureIncomingFriendshipId();
+      if (!id) {
+        toast.error("Couldn't find that request anymore.");
+        return;
+      }
+      await socialApi.respondRequest(id, false);
+      setFriendStatus("none");
+      toast.success("Friend request declined.");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Couldn't decline request.");
+    } finally {
+      setFriendActionPending(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -252,7 +453,7 @@ export const Profile: React.FC = () => {
                 )}
               </div>
 
-              {isOwnProfile && (
+              {isOwnProfile ? (
                 <Link
                   to="/dashboard/settings"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-theme text-sm font-medium text-theme-primary hover:bg-theme-tertiary hover:border-[#10b981]/40 transition-colors"
@@ -260,7 +461,74 @@ export const Profile: React.FC = () => {
                   <SettingsIcon className="w-4 h-4" />
                   Edit profile
                 </Link>
-              )}
+              ) : friendStatus === "pending_incoming" ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleFriendAction}
+                    disabled={friendActionPending}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#10b981] hover:bg-[#059669] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+                  >
+                    {friendActionPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4" />
+                    )}
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeclineIncoming}
+                    disabled={friendActionPending}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-theme text-sm font-medium text-theme-primary hover:bg-theme-tertiary disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <XIcon className="w-4 h-4" />
+                    Decline
+                  </button>
+                </div>
+              ) : friendStatus === "pending_outgoing" ? (
+                <button
+                  type="button"
+                  onClick={handleFriendAction}
+                  disabled={friendActionPending}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-theme text-sm font-medium text-theme-primary hover:bg-theme-tertiary disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {friendActionPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <XIcon className="w-4 h-4" />
+                  )}
+                  Request sent
+                </button>
+              ) : friendStatus === "accepted" ? (
+                <button
+                  type="button"
+                  onClick={handleFriendAction}
+                  disabled={friendActionPending}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[#10b981]/40 text-[#10b981] text-sm font-medium hover:bg-[#10b981]/10 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {friendActionPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <UserCheck className="w-4 h-4" />
+                  )}
+                  Friends
+                </button>
+              ) : friendStatus === "none" ? (
+                <button
+                  type="button"
+                  onClick={handleFriendAction}
+                  disabled={friendActionPending}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#10b981] hover:bg-[#059669] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+                >
+                  {friendActionPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <UserPlus className="w-4 h-4" />
+                  )}
+                  Add friend
+                </button>
+              ) : null}
             </div>
 
             {profile.bio && (
@@ -358,6 +626,77 @@ export const Profile: React.FC = () => {
             .
           </p>
         </div>
+      )}
+
+      {/* Library preview — only rendered when the viewer is allowed to see
+          this profile's library (own profile, or accepted friend). */}
+      {canViewLibrary && (
+        <section aria-label="Library preview">
+          <div className="flex items-baseline justify-between mb-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Archive className="w-5 h-5 text-theme-secondary" />
+              Library
+            </h2>
+            <span className="text-xs text-theme-secondary">
+              {libraryTotal} {libraryTotal === 1 ? "item" : "items"}
+            </span>
+          </div>
+
+          {libraryLoading ? (
+            <div className="flex items-center justify-center h-40 text-theme-secondary gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Loading library…
+            </div>
+          ) : libraryItems.length === 0 ? (
+            <div className="dense-card text-center py-10 text-sm text-theme-secondary">
+              {isOwnProfile
+                ? "Your library is empty. Add a movie or show to get started."
+                : `@${profile.username ?? "user"} hasn't added anything to their library yet.`}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {libraryItems.map((item) => (
+                <Link
+                  key={item.id}
+                  to={mediaPath(item.media_type, item.tmdb_id)}
+                  className="group dense-card overflow-hidden p-0 hover:border-[#10b981]/40 transition-colors"
+                >
+                  <div className="aspect-[2/3] w-full bg-theme-tertiary overflow-hidden">
+                    {item.poster_url ? (
+                      <img
+                        src={item.poster_url}
+                        alt={item.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-theme-muted text-xs">
+                        No poster
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-2 py-1.5">
+                    <p className="text-xs font-medium truncate" title={item.title}>
+                      {item.title}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-wide text-theme-secondary">
+                      <span
+                        className={
+                          item.media_type === "movie"
+                            ? "text-blue-400"
+                            : "text-purple-400"
+                        }
+                      >
+                        {item.media_type === "movie" ? "Movie" : "TV"}
+                      </span>
+                      {item.release_year ? ` · ${item.release_year}` : ""}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
       )}
     </div>
   );
