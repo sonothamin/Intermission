@@ -126,26 +126,60 @@ Deno.serve(async (req: Request) => {
 // Handlers
 // =============================================================================
 
-async function listFriends(db: ReturnType<typeof getUserClient>, userId: string, origin: string | null) {
-  // Friendships where I'm either a or b. We pull the *other* side's profile in
-  // a single round-trip via PostgREST embedding.
-  const { data, error } = await db
-    .from("friendships")
-    .select(
-      `id, status, requested_by, created_at, responded_at,
-       user_a:profiles!friendships_user_a_id_fkey (${PROFILE_SELECT}),
-       user_b:profiles!friendships_user_b_id_fkey (${PROFILE_SELECT})`,
-    )
-    .eq("status", "accepted")
-    .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
+// Type for a raw friendships row (no embedded profile).
+type RawFriendship = {
+  id: string;
+  status: "pending" | "accepted" | "declined" | "blocked";
+  requested_by: string;
+  created_at: string;
+  responded_at: string | null;
+  user_a_id: string;
+  user_b_id: string;
+};
 
-  if (error) {
-    log.error("listFriends failed", { error: error.message });
-    return internalError(origin, error);
+/**
+ * Hydrate a list of friendship rows with the *other* side's profile.
+ *
+ * We can't embed `profiles` directly via PostgREST because the
+ * `friendships` table doesn't declare FKs to `public.profiles` (only to
+ * `auth.users`), and PostgREST's resource embedding requires real FK
+ * relationships. Fetching profiles in a second round-trip is reliable
+ * across the RLS boundary and the `in` filter caps the payload.
+ */
+async function hydrateFriendships(
+  db: ReturnType<typeof getUserClient>,
+  viewerId: string,
+  rows: RawFriendship[],
+  origin: string | null,
+): Promise<{ ok: true; data: FriendRow[] } | { ok: false; response: Response }> {
+  const otherIds = Array.from(
+    new Set(
+      rows.map((r) => (r.user_a_id === viewerId ? r.user_b_id : r.user_a_id)),
+    ),
+  );
+
+  if (otherIds.length === 0) return { ok: true, data: [] };
+
+  const { data: profiles, error: pErr } = await db
+    .from("profiles")
+    .select(PROFILE_SELECT)
+    .in("id", otherIds);
+
+  if (pErr) {
+    log.error("hydrateFriendships: profile fetch failed", { error: pErr.message });
+    return { ok: false, response: internalError(origin, pErr) };
   }
 
-  const friends: FriendRow[] = (data ?? []).map((row: any) => {
-    const other = row.user_a?.id === userId ? row.user_b : row.user_a;
+  const byId = new Map<string, any>((profiles ?? []).map((p: any) => [p.id, p]));
+
+  const data: FriendRow[] = rows.map((row) => {
+    const otherId = row.user_a_id === viewerId ? row.user_b_id : row.user_a_id;
+    const other = byId.get(otherId) ?? {
+      id: otherId,
+      username: null,
+      display_name: null,
+      avatar_url: null,
+    };
     return {
       friendship_id: row.id,
       status: row.status,
@@ -161,7 +195,26 @@ async function listFriends(db: ReturnType<typeof getUserClient>, userId: string,
     };
   });
 
-  return json({ friends }, origin);
+  return { ok: true, data };
+}
+
+async function listFriends(db: ReturnType<typeof getUserClient>, userId: string, origin: string | null) {
+  // Friendships where I'm either a or b.
+  const { data, error } = await db
+    .from("friendships")
+    .select("id, status, requested_by, created_at, responded_at, user_a_id, user_b_id")
+    .eq("status", "accepted")
+    .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
+
+  if (error) {
+    log.error("listFriends failed", { error: error.message });
+    return internalError(origin, error);
+  }
+
+  const hydrated = await hydrateFriendships(db, userId, (data ?? []) as RawFriendship[], origin);
+  if (!hydrated.ok) return hydrated.response;
+
+  return json({ friends: hydrated.data }, origin);
 }
 
 async function listRequests(
@@ -175,11 +228,7 @@ async function listRequests(
   //   outgoing → requested_by = me
   const { data, error } = await db
     .from("friendships")
-    .select(
-      `id, status, requested_by, created_at, responded_at,
-       user_a:profiles!friendships_user_a_id_fkey (${PROFILE_SELECT}),
-       user_b:profiles!friendships_user_b_id_fkey (${PROFILE_SELECT})`,
-    )
+    .select("id, status, requested_by, created_at, responded_at, user_a_id, user_b_id")
     .eq("status", "pending")
     .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`);
 
@@ -188,28 +237,14 @@ async function listRequests(
     return internalError(origin, error);
   }
 
-  const requests: FriendRow[] = (data ?? [])
-    .filter((row: any) =>
-      type === "incoming" ? row.requested_by !== userId : row.requested_by === userId,
-    )
-    .map((row: any) => {
-      const other = row.user_a?.id === userId ? row.user_b : row.user_a;
-      return {
-        friendship_id: row.id,
-        status: row.status,
-        requested_by: row.requested_by,
-        created_at: row.created_at,
-        responded_at: row.responded_at,
-        user: {
-          id: other.id,
-          username: other.username,
-          display_name: other.display_name,
-          avatar_url: other.avatar_url,
-        },
-      };
-    });
+  const filtered = ((data ?? []) as RawFriendship[]).filter((row) =>
+    type === "incoming" ? row.requested_by !== userId : row.requested_by === userId,
+  );
 
-  return json({ requests }, origin);
+  const hydrated = await hydrateFriendships(db, userId, filtered, origin);
+  if (!hydrated.ok) return hydrated.response;
+
+  return json({ requests: hydrated.data }, origin);
 }
 
 async function searchUsers(
