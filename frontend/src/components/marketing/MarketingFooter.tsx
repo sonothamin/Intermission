@@ -16,9 +16,9 @@ const RESOURCES = [
 ];
 
 const PRODUCT_GRID = [
-  { label: "Search", to: "/search" },
-  { label: "Library", to: "/library" },
-  { label: "Watchlist", to: "/watchlist" },
+  { label: "Search", to: "/dashboard/search" },
+  { label: "Library", to: "/dashboard/library" },
+  { label: "Watchlist", to: "/dashboard/watchlist" },
 ];
 
 /**

@@ -64,7 +64,7 @@ export const MovieDetail: React.FC = () => {
         tagline={movie.tagline}
         mediaType="movie"
         backLabel="Back to search"
-        backTo="/search"
+        backTo="/dashboard/search"
       >
         <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
           {movie.release_year && (

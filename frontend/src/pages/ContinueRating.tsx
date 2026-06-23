@@ -335,7 +335,7 @@ export const ContinueRating: React.FC = () => {
           </p>
           <div className="flex gap-3 mt-6">
             <Link
-              to="/library"
+              to="/dashboard/library"
               className="px-4 py-2 rounded-md bg-theme-secondary border border-theme text-theme-primary font-medium hover:bg-theme-tertiary transition-colors"
             >
               Back to Library

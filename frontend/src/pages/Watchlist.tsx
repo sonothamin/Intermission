@@ -136,7 +136,7 @@ export const Watchlist: React.FC = () => {
           <div className="flex-1 flex flex-col items-center justify-center text-theme-secondary p-8">
             <ListPlus className="w-12 h-12 mb-4 text-theme-muted opacity-40" />
             <p>Your watchlist is empty.</p>
-            <Link to="/search" className="mt-4 text-[#10b981] hover:underline text-sm font-medium">Find something to watch</Link>
+            <Link to="/dashboard/search" className="mt-4 text-[#10b981] hover:underline text-sm font-medium">Find something to watch</Link>
           </div>
         ) : (
           <>

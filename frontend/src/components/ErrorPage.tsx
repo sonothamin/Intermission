@@ -106,8 +106,10 @@ export const ErrorPage: React.FC<ErrorPageProps> = (props) => {
     description,
     quote,
     attribution,
-    primaryHref = "/dashboard",
-    primaryLabel = "Back to dashboard",
+    // Default CTA lands on the public marketing site so signed-out visitors
+    // don't get bounced through /login. Each status can override.
+    primaryHref = "/",
+    primaryLabel = "Back home",
   } = props;
   // Default the accent here so downstream children see a narrowed,
   // non-undefined value.

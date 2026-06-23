@@ -333,7 +333,7 @@ export const ShowDetail: React.FC = () => {
         tagline={show.tagline}
         mediaType="tv"
         backLabel="Back to search"
-        backTo="/search"
+        backTo="/dashboard/search"
       >
         <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
           {show.release_year && (

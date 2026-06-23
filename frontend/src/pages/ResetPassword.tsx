@@ -88,7 +88,7 @@ export const ResetPassword: React.FC = () => {
       await supabase.auth.signOut();
       window.setTimeout(() => navigate("/login"), 2500);
     } else {
-      window.setTimeout(() => navigate("/settings"), 2500);
+      window.setTimeout(() => navigate("/dashboard/settings"), 2500);
     }
   };
 
@@ -208,7 +208,7 @@ export const ResetPassword: React.FC = () => {
         {!success && !showRecoveryPrompt && (
           <div className="pt-2 text-center">
             <Link
-              to={user ? "/settings" : "/login"}
+              to={user ? "/dashboard/settings" : "/login"}
               className="text-xs text-theme-secondary hover:text-theme-primary hover:underline transition-colors"
             >
               {user ? "Back to settings" : "Back to sign in"}

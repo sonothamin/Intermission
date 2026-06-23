@@ -396,7 +396,7 @@ export const Layout: React.FC = () => {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => navigate("/settings")}
+                onClick={() => navigate("/dashboard/settings")}
                 className="w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors"
                 style={{ color: "var(--text-secondary)" }}
                 onMouseEnter={(e) => {

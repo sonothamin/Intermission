@@ -308,7 +308,7 @@ export const Dashboard: React.FC = () => {
           title={
             <span className="flex items-center justify-between w-full">
               <span>Recent Activity</span>
-              <Link to="/library" className="text-xs font-medium text-[#10b981] hover:underline">View All</Link>
+              <Link to="/dashboard/library" className="text-xs font-medium text-[#10b981] hover:underline">View All</Link>
             </span>
           }
         >

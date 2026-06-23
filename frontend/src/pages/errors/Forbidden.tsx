@@ -17,5 +17,7 @@ export const Forbidden: React.FC = () => (
     quote="You shall not pass!"
     attribution="The Lord of the Rings: The Fellowship of the Ring (2001) · Gandalf"
     accent="amber"
+    primaryHref="/dashboard/library"
+    primaryLabel="Back to your library"
   />
 );
