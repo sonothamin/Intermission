@@ -137,3 +137,49 @@ enabled = true
 port = 54327
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
+
+# ----------------------------------------------------------------------------
+# Edge Functions
+# ----------------------------------------------------------------------------
+# All user-facing functions require a valid Supabase JWT in production.
+# Default for Supabase is `verify_jwt = true`; declaring it explicitly here
+# makes the prod contract obvious and protects against the `--no-verify-jwt`
+# CLI flag ever being reintroduced.
+[functions.account]
+verify_jwt = true
+
+[functions.analytics]
+verify_jwt = true
+
+[functions.episode-progress]
+verify_jwt = true
+
+[functions.import]
+verify_jwt = true
+
+[functions.library]
+verify_jwt = true
+
+[functions.media-details]
+verify_jwt = true
+
+[functions.media-search]
+verify_jwt = true
+
+[functions.profile]
+verify_jwt = true
+
+[functions.scrobble]
+verify_jwt = true
+
+[functions.season-details]
+verify_jwt = true
+
+[functions.settings]
+verify_jwt = true
+
+[functions.social]
+verify_jwt = true
+
+[functions.watchlist]
+verify_jwt = true
