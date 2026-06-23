@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
-import { profileApi, UserProfile, settingsApi, UserSettings, accountApi, ImportResult, libraryApi, scrobbleApi, mediaApi, episodeApi } from "../lib/api";
+import { profileApi, UserProfile, settingsApi, UserSettings, accountApi, ImportResult, libraryApi, scrobbleApi, mediaApi, episodeApi, watchlistApi } from "../lib/api";
 import { ImportFormatHelp } from "../components/ImportFormatHelp";
 import { Loader2, Save, Download, Upload, AlertTriangle, User as UserIcon, X, Lock, ChevronRight, Globe, MapPin, Eye, EyeOff, Bell, Layers } from "lucide-react";
 import { parseImportContent, ClientParsedImport } from "../lib/importParser";
@@ -285,6 +285,19 @@ export const Settings: React.FC = () => {
         const batch = parsed.slice(i, i + batchSize);
         await Promise.all(batch.map(async (item) => {
           try {
+            // Watchlist items should be added to the watchlist, not the library.
+            if (item.is_watchlist) {
+              try {
+                await watchlistApi.add({
+                  tmdb_id: item.tmdb_id,
+                  media_type: item.media_type,
+                  notes: item.notes || undefined,
+                });
+              } catch (err: any) {
+                if (!err.message?.includes("already in your watchlist") && !String(err).includes("409")) throw err;
+              }
+              return;
+            }
             const cacheKey = `${item.media_type}:${item.tmdb_id}`;
             const currentWatches = existingWatches.get(cacheKey);
             const exists = currentWatches !== undefined;
@@ -401,8 +414,8 @@ export const Settings: React.FC = () => {
 
       setImportResult({
         format: parsedImportData.format,
-        library: { imported: parsed.filter(p => !p.is_episode).length, updated: 0, skipped: parsedImportData.skipped.length, errors: [] },
-        watchlist: { imported: parsed.filter(p => p.status === "plan_to_watch").length, skipped: 0, errors: [] },
+        library: { imported: parsed.filter(p => !p.is_episode && !p.is_watchlist).length, updated: 0, skipped: parsedImportData.skipped.length, errors: [] },
+        watchlist: { imported: parsed.filter(p => p.is_watchlist).length, skipped: 0, errors: [] },
         episodes: { imported: parsed.filter(p => p.is_episode).length, skipped: 0, errors: [] }
       });
       setShowPreviewModal(false);

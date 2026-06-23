@@ -328,12 +328,14 @@ function parseCsv(content: string): ParsedImport {
   const episodeIdx = idx("episode") >= 0 ? idx("episode") : idx("episode_number");
   const titleIdx = idx("title");
   const notesIdx = idx("notes");
+  const listTypeIdx = idx("list_type") >= 0 ? idx("list_type") : idx("list");
 
   const library: ImportLibraryRow[] = [];
   const episodes: ImportEpisodeRow[] = [];
   const watchlist: ImportLibraryRow[] = [];
   const libSeen = new Set<string>();
   const epSeen = new Set<string>();
+  const wlSeen = new Set<string>();
 
   for (let i = 1; i < lines.length; i++) {
     const cols = splitCsvLine(lines[i]);
@@ -341,10 +343,26 @@ function parseCsv(content: string): ParsedImport {
     const tmdb_id = parseInt(cols[tmdbIdx]?.trim() ?? "", 10);
     if (!["movie", "tv"].includes(media_type) || isNaN(tmdb_id)) continue;
 
+    const rawListType = listTypeIdx >= 0 ? (cols[listTypeIdx]?.trim().toLowerCase() || "") : "";
+    const explicitWatchlist = rawListType === "watchlist" || rawListType === "plan_to_watch";
+    const explicitLibrary = rawListType === "library";
+
     const status = statusIdx >= 0
       ? normalizeStatus(cols[statusIdx], "plan_to_watch")
       : "plan_to_watch";
     const watched_at = watchedIdx >= 0 ? cols[watchedIdx]?.trim() || null : null;
+
+    // If the CSV row is explicitly tagged as a watchlist row, route to watchlist
+    // and skip library/episodes bookkeeping for that row.
+    if (explicitWatchlist && !explicitLibrary) {
+      pushLibrary(watchlist, wlSeen, {
+        tmdb_id,
+        media_type: media_type as ImportMediaType,
+        status: "plan_to_watch",
+        notes: notesIdx >= 0 ? cols[notesIdx]?.trim() || null : null,
+      });
+      continue;
+    }
 
     pushLibrary(library, libSeen, {
       tmdb_id,

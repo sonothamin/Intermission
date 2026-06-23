@@ -19,6 +19,8 @@ export interface ParsedEntry {
   season_number?: number | null;
   episode_number?: number | null;
   watched_at?: string | null;
+  // True if this entry should be added to the watchlist (not the library)
+  is_watchlist?: boolean;
 }
 
 export interface SkippedEntry {
@@ -178,6 +180,7 @@ function parseIntermissionJson(obj: Record<string, unknown>): ClientParsedImport
         rating: null,
         notes: typeof row.notes === "string" ? row.notes : null,
         times_watched: 0,
+        is_watchlist: true,
       });
     }
   }
@@ -426,6 +429,7 @@ function parseCsv(content: string): ClientParsedImport {
   const episodeIdx = idx("episode") >= 0 ? idx("episode") : idx("episode_number");
   const titleIdx = idx("title");
   const notesIdx = idx("notes");
+  const listTypeIdx = idx("list_type") >= 0 ? idx("list_type") : idx("list");
 
   const parsed: ParsedEntry[] = [];
   const skipped: SkippedEntry[] = [];
@@ -450,6 +454,10 @@ function parseCsv(content: string): ClientParsedImport {
     }
 
     const title = titleIdx >= 0 ? cols[titleIdx]?.trim() : undefined;
+    const rawListType = listTypeIdx >= 0 ? (cols[listTypeIdx]?.trim().toLowerCase() || "") : "";
+    const explicitWatchlist = rawListType === "watchlist" || rawListType === "plan_to_watch";
+    const explicitLibrary = rawListType === "library";
+
     const status = statusIdx >= 0
       ? normalizeStatus(cols[statusIdx], "plan_to_watch")
       : "plan_to_watch";
@@ -475,6 +483,21 @@ function parseCsv(content: string): ClientParsedImport {
         });
         continue;
       }
+    }
+
+    // If the CSV explicitly says this is a watchlist row, route to watchlist.
+    if (explicitWatchlist && !explicitLibrary) {
+      parsed.push({
+        tmdb_id,
+        media_type: media_type as ImportMediaType,
+        title: title || `${media_type === "movie" ? "Movie" : "TV Show"} (TMDB: ${tmdb_id})`,
+        status: "plan_to_watch",
+        rating: null,
+        notes,
+        times_watched: 0,
+        is_watchlist: true,
+      });
+      continue;
     }
 
     parsed.push({
