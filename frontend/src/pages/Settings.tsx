@@ -4,9 +4,10 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { profileApi, UserProfile, settingsApi, UserSettings, accountApi, ImportResult, libraryApi, scrobbleApi, mediaApi, episodeApi } from "../lib/api";
 import { ImportFormatHelp } from "../components/ImportFormatHelp";
-import { Loader2, Save, Download, Upload, AlertTriangle, User as UserIcon, X, Lock, ChevronRight } from "lucide-react";
+import { Loader2, Save, Download, Upload, AlertTriangle, User as UserIcon, X, Lock, ChevronRight, Globe, MapPin, Eye, EyeOff, Bell, Film, Tv, Layers } from "lucide-react";
 import { parseImportContent, ClientParsedImport } from "../lib/importParser";
 import { CustomSelect } from "../components/CustomSelect";
+import { Toggle } from "../components/Toggle";
 import { useTheme } from "../context/ThemeContext";
 
 export const Settings: React.FC = () => {
