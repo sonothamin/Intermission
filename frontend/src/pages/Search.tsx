@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { searchApi, SearchResult, libraryApi, watchlistApi } from "../lib/api";
-import { mediaPath } from "../lib/media";
+import { formatStatus, mediaPath } from "../lib/media";
 import { Search as SearchIcon, Plus, ListPlus, Loader2, Film } from "lucide-react";
 
 export const Search: React.FC = () => {
@@ -152,7 +152,7 @@ export const Search: React.FC = () => {
                 <div className="mt-auto pt-3 border-t border-theme flex gap-2">
                   {item.user_status ? (
                     <div className="flex-1 py-1.5 text-center bg-[#10b981]/10 text-[#10b981] rounded text-xs font-medium border border-[#10b981]/20">
-                      In Library ({item.user_status.status.replace("_", " ")})
+                      In Library ({formatStatus(item.user_status.status)})
                     </div>
                   ) : (
                     <button

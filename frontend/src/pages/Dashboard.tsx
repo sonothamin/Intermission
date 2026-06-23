@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, BarChart, Bar,
 } from "recharts";
 import { analyticsApi, Analytics, libraryApi, LibraryItem } from "../lib/api";
-import { mediaPath } from "../lib/media";
+import { breakdownRuntime, formatStatus, getFlagEmoji, mediaPath, mediaTypeBadge } from "../lib/media";
 import { Clock, Film, Tv, Activity, Trophy, Library, Star } from "lucide-react";
 import { CustomSelect } from "../components/CustomSelect";
 import { StatCard } from "../components/StatCard";
@@ -17,15 +17,6 @@ import { HorizontalBarChart } from "../components/HorizontalBarChart";
 import { ContinueWatching } from "../components/ContinueWatching";
 import { PeopleSearch } from "../components/PeopleSearch";
 import { chartAxisStroke, chartGridStroke } from "../lib/chartTheme";
-
-const getFlagEmoji = (countryCode: string) => {
-  if (!countryCode || countryCode.length !== 2) return countryCode;
-  const codePoints = countryCode
-    .toUpperCase()
-    .split("")
-    .map(char => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
-};
 
 type Period = "all" | "30d" | "90d" | "1y";
 
@@ -77,9 +68,7 @@ export const Dashboard: React.FC = () => {
 
   // Convert decimal hours into a compact days / hours / minutes breakdown.
   const totalMinutes = Math.round(summary.total_hours_watched * 60);
-  const days = Math.floor(totalMinutes / 1440);
-  const hours = Math.floor((totalMinutes % 1440) / 60);
-  const minutes = totalMinutes % 60;
+  const { days, hours, minutes } = breakdownRuntime(totalMinutes) ?? { days: 0, hours: 0, minutes: 0 };
   const watchParts: Array<[number, string]> = [
     [days, "d"],
     [hours, "h"],
@@ -330,14 +319,13 @@ export const Dashboard: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium text-theme-primary truncate group-hover:text-[#10b981] transition-colors">{item.title}</h4>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${item.media_type === 'movie' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
-                        }`}>
+                      <span className={mediaTypeBadge(item.media_type, "solid").className}>
                         {item.media_type}
                       </span>
                       <span className="text-xs text-theme-secondary truncate">
                         {item.status === 'watching' ? 'Currently watching' :
                           item.status === 'completed' ? `Completed · Rated ${item.rating || '-'}/10` :
-                            item.status.replace('_', ' ')}
+                            formatStatus(item.status)}
                       </span>
                     </div>
                   </div>

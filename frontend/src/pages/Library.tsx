@@ -4,7 +4,7 @@ import { libraryApi, LibraryItem, WatchStatus } from "../lib/api";
 import { toast } from "react-hot-toast";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { WatchedDateModal } from "../components/WatchedDateModal";
-import { mediaPath } from "../lib/media";
+import { mediaPath, mediaTypeBadge } from "../lib/media";
 import { Loader2, Search, Filter, MoreVertical, Star, Film, Archive, List, LayoutGrid, Tv, Layers, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { CustomSelect } from "../components/CustomSelect";
@@ -266,9 +266,7 @@ export const Library: React.FC = () => {
                             {item.title}
                           </Link>
                           <div className="text-xs text-theme-secondary mt-1 flex items-center justify-between">
-                            <span className={`text-[9px] uppercase font-bold px-1 py-0.5 rounded ${
-                              item.media_type === 'movie' ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'
-                            }`}>
+                            <span className={mediaTypeBadge(item.media_type).className.replace("text-[10px]", "text-[9px]").replace("px-1.5", "px-1")}>
                               {item.media_type}
                             </span>
                             <span>{item.release_year || "—"}</span>
@@ -358,9 +356,7 @@ export const Library: React.FC = () => {
                           </Link>
                         </td>
                         <td>
-                          <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
-                            item.media_type === 'movie' ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'
-                          }`}>
+                          <span className={mediaTypeBadge(item.media_type).className}>
                             {item.media_type}
                           </span>
                         </td>

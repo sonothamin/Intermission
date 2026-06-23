@@ -5,6 +5,7 @@
 *.temp*
 .temp
 .temp/
+TODO.md
 
 # OS / editor cruft
 .DS_Store
