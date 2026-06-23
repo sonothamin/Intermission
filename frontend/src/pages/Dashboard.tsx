@@ -106,7 +106,7 @@ export const Dashboard: React.FC = () => {
         </h1>
         <div className="flex gap-2">
           <Link
-            to="/continue-rating"
+            to="/dashboard/continue-rating"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-theme-secondary border border-theme text-sm font-medium text-theme-primary hover:bg-theme-tertiary hover:border-[#10b981]/40 transition-colors"
             title="Rate your unrated library items"
           >
