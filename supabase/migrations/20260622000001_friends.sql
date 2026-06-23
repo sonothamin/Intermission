@@ -116,8 +116,11 @@ CREATE POLICY "friendships_delete_participant"
 -- Grants
 -- =============================================================================
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.friendships TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.friendships TO service_role;
 GRANT EXECUTE ON FUNCTION public.are_friends(UUID, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.has_pending_request(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.are_friends(UUID, UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION public.has_pending_request(UUID, UUID) TO service_role;
 
 -- =============================================================================
 -- Library visibility for accepted friends

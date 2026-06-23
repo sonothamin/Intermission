@@ -130,14 +130,19 @@ Deno.serve(async (req: Request) => {
           ? [requestingUser.id, userId]
           : [userId, requestingUser.id];
 
-        const { data: fr } = await adminDb
+        log.debug("friendship lookup", { requestingUserId: requestingUser.id, targetUserId: userId, a, b });
+
+        const { data: fr, error: frErr } = await adminDb
           .from("friendships")
           .select("id, status, requested_by")
           .eq("user_a_id", a)
           .eq("user_b_id", b)
           .maybeSingle();
 
-        if (fr) {
+        if (frErr) {
+          log.error("friendship lookup failed", { error: frErr.message, code: frErr.code });
+        } else if (fr) {
+          log.debug("friendship found", { id: fr.id, status: fr.status });
           if (fr.status === "accepted") friendStatus = "accepted";
           else if (fr.status === "blocked") friendStatus = "blocked";
           else if (fr.status === "pending") {
@@ -145,6 +150,8 @@ Deno.serve(async (req: Request) => {
               ? "pending_outgoing"
               : "pending_incoming";
           }
+        } else {
+          log.debug("friendship not found", { a, b });
         }
       }
 
