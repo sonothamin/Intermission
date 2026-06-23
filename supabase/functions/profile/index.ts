@@ -1,10 +1,11 @@
 // =============================================================================
 // profile/index.ts — User profile management
 //
-// GET    /functions/v1/profile              → own profile + stats
-// GET    /functions/v1/profile?user_id=     → public profile
-// PATCH  /functions/v1/profile              → update own profile
-// POST   /functions/v1/profile/avatar       → upload avatar
+// GET    /functions/v1/profile                  → own profile + stats
+// GET    /functions/v1/profile?user_id=         → public profile by user id
+// GET    /functions/v1/profile?username=        → public profile by username
+// PATCH  /functions/v1/profile                  → update own profile
+// POST   /functions/v1/profile/avatar           → upload avatar
 // =============================================================================
 
 import { handleCors, corsHeaders } from "../_shared/cors.ts";
@@ -39,19 +40,38 @@ Deno.serve(async (req: Request) => {
     // ─────────────────────────────────────────────────────────────────────────
     if (req.method === "GET") {
       const targetUserId = params.get("user_id");
+      const targetUsername = params.get("username");
 
       // Try to get the requesting user (optional)
       const requestingUser = await tryGetAuthUser(req);
       const db = requestingUser ? getUserClient(req) : getAdminClient();
 
+      // Resolve the user id from whichever identifier was supplied. Username
+      // lookups go through the admin client because RLS hides private profiles
+      // — we'll still respect the privacy flag below before returning data.
       let userId: string;
 
       if (targetUserId) {
         userId = targetUserId;
+      } else if (targetUsername) {
+        if (targetUsername.length < 3 || targetUsername.length > 30) {
+          return badRequest("username must be between 3 and 30 characters", origin);
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(targetUsername)) {
+          return badRequest("username can only contain letters, numbers, and underscores", origin);
+        }
+        const { data: match, error: lookupErr } = await getAdminClient()
+          .from("profiles")
+          .select("id")
+          .eq("username", targetUsername)
+          .maybeSingle();
+        if (lookupErr) throw lookupErr;
+        if (!match) return notFound("Profile", origin);
+        userId = match.id;
       } else if (requestingUser) {
         userId = requestingUser.id;
       } else {
-        return badRequest("user_id parameter required for unauthenticated requests", origin);
+        return badRequest("user_id or username parameter required for unauthenticated requests", origin);
       }
 
       const isOwnProfile = requestingUser?.id === userId;

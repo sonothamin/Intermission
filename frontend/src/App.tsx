@@ -49,6 +49,13 @@ const ShowDetail = lazy(() =>
 const ContinueRatingPage = lazy(() =>
   import("./pages/ContinueRating").then((m) => ({ default: m.ContinueRating }))
 );
+// Public profile view at /u/:username. Lives inside the dashboard layout so
+// the sidebar/topbar stay visible — the page is reachable by any signed-in
+// user (the edge function enforces the is_public privacy flag for other
+// users).
+const ProfilePage = lazy(() =>
+  import("./pages/Profile").then((m) => ({ default: m.Profile }))
+);
 
 const PageFallback: React.FC = () => (
   <div className="h-screen flex flex-col items-center justify-center bg-theme-primary text-theme-primary gap-4">
@@ -118,6 +125,11 @@ const AppInner = () => (
                 layout so the sidebar + topbar stay visible, matching the rest
                 of the protected app. */}
             <Route path="continue-rating" element={<ContinueRatingPage />} />
+            {/* Public profile view. The sidebar's avatar links to /u/{username}
+                for the signed-in user; this route also resolves any other
+                handle shared via link. The edge function enforces the
+                is_public privacy flag for non-owners. */}
+            <Route path="u/:username" element={<ProfilePage />} />
           </Route>
 
           {/* Legacy top-level path — kept as a redirect so existing links

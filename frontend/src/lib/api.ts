@@ -583,6 +583,16 @@ export const profileApi = {
       userId ? { user_id: userId } : undefined,
     ),
 
+  /**
+   * Resolve a public profile by username (e.g. for the /u/:username route).
+   * Mirrors `get` but looks the user up by their unique handle instead of id.
+   */
+  getByUsername: (username: string) =>
+    getFunction<{ profile: UserProfile; stats: any; settings: UserSettings | null }>(
+      "profile",
+      { username },
+    ),
+
   update: (updates: Partial<{
     username: string;
     display_name: string;

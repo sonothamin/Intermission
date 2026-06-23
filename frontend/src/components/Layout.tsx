@@ -15,6 +15,7 @@ import {
   Monitor,
   Moon,
   Sun,
+  User,
 } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { useTheme, type Theme } from "../context/ThemeContext";
@@ -31,6 +32,14 @@ export const Layout: React.FC = () => {
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Link target for the current user's own profile page. Prefer the handle
+  // (clean /u/<username> URL), fall back to the user id when no username is set.
+  const ownProfilePath = profile?.username
+    ? `/dashboard/u/${profile.username}`
+    : user?.id
+      ? `/dashboard/u/${user.id}`
+      : "/dashboard";
 
   const isDetailPage =
     /^\/(movie|show)\/\d+/.test(location.pathname);
@@ -186,23 +195,35 @@ export const Layout: React.FC = () => {
         >
           {collapsed ? (
             <div className="flex justify-center mb-2">
-              <div
-                className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium"
-                style={{
-                  background: "var(--border-subtle)",
-                  color: "var(--text-primary)",
-                  border: "1px solid var(--border-focus)",
-                }}
+              <Link
+                to={ownProfilePath}
+                title="View your profile"
+                aria-label="View your profile"
+                className="block rounded-full hover:opacity-85 transition-opacity"
               >
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  (profile?.display_name || user?.email || "?").charAt(0).toUpperCase()
-                )}
-              </div>
+                <div
+                  className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium"
+                  style={{
+                    background: "var(--border-subtle)",
+                    color: "var(--text-primary)",
+                    border: "1px solid var(--border-focus)",
+                  }}
+                >
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    (profile?.display_name || user?.email || "?").charAt(0).toUpperCase()
+                  )}
+                </div>
+              </Link>
             </div>
           ) : (
-            <div className="flex items-center gap-3 px-3 py-2 mb-2">
+            <Link
+              to={ownProfilePath}
+              className="flex items-center gap-3 px-3 py-2 mb-2 rounded-md transition-colors hover:bg-theme-tertiary"
+              style={{ color: "var(--text-primary)" }}
+              title="View your profile"
+            >
               <div
                 className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center text-sm font-medium"
                 style={{
@@ -225,7 +246,7 @@ export const Layout: React.FC = () => {
                   {user?.email}
                 </p>
               </div>
-            </div>
+            </Link>
           )}
           <ThemeSwitcher collapsed={collapsed} />
           <button
@@ -263,25 +284,26 @@ export const Layout: React.FC = () => {
         </Link>
         <div className="relative" ref={mobileMenuRef}>
           <button
-            type="button"
-            onClick={() => setMobileMenuOpen((v) => !v)}
-            aria-haspopup="menu"
-            aria-expanded={mobileMenuOpen}
-            aria-label="Open account menu"
-            className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-medium hover:opacity-85 transition-opacity"
-            style={{
-              background: "var(--border-subtle)",
-              color: "var(--text-primary)",
-              border: "1px solid var(--border-focus)",
-            }}
-          >
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              (profile?.display_name || user?.email || "?").charAt(0).toUpperCase()
-            )}
-          </button>
-          {mobileMenuOpen && (
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="p-1 rounded-full"
+              aria-label="Open menu"
+            >
+              <div
+                className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-sm font-medium"
+                style={{
+                  background: "var(--border-subtle)",
+                  color: "var(--text-primary)",
+                  border: "1px solid var(--border-focus)",
+                }}
+              >
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  (profile?.display_name || user?.email || "?").charAt(0).toUpperCase()
+                )}
+              </div>
+            </button>
+            {mobileMenuOpen && (
             <div
               role="menu"
               className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-xl border overflow-hidden"
@@ -349,6 +371,25 @@ export const Layout: React.FC = () => {
                   ))}
                 </div>
               </div>
+
+              <Link
+                to={ownProfilePath}
+                role="menuitem"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors"
+                style={{ color: "var(--text-secondary)" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.background = "var(--border-subtle)";
+                  (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.background = "transparent";
+                  (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-secondary)";
+                }}
+              >
+                <User className="w-4 h-4" />
+                View profile
+              </Link>
 
               <button
                 type="button"
