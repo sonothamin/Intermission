@@ -57,6 +57,33 @@ const ProfilePage = lazy(() =>
   import("./pages/Profile").then((m) => ({ default: m.Profile }))
 );
 
+// Public error pages. Full-bleed, themed with cinematic quotes, and lazy
+// so the protected bundle stays lean. Any status-specific URL falls through
+// to the catch-all 404.
+const NotFoundPage = lazy(() =>
+  import("./pages/errors/NotFound").then((m) => ({ default: m.NotFound })),
+);
+const UnauthorizedPage = lazy(() =>
+  import("./pages/errors/Unauthorized").then((m) => ({ default: m.Unauthorized })),
+);
+const ForbiddenPage = lazy(() =>
+  import("./pages/errors/Forbidden").then((m) => ({ default: m.Forbidden })),
+);
+const BadRequestPage = lazy(() =>
+  import("./pages/errors/BadRequest").then((m) => ({ default: m.BadRequest })),
+);
+const ServerErrorPage = lazy(() =>
+  import("./pages/errors/ServerError").then((m) => ({ default: m.ServerError })),
+);
+const BadGatewayPage = lazy(() =>
+  import("./pages/errors/BadGateway").then((m) => ({ default: m.BadGateway })),
+);
+const ServiceUnavailablePage = lazy(() =>
+  import("./pages/errors/ServiceUnavailable").then((m) => ({
+    default: m.ServiceUnavailable,
+  })),
+);
+
 const PageFallback: React.FC = () => (
   <div className="h-screen flex flex-col items-center justify-center bg-theme-primary text-theme-primary gap-4">
     <div className="flex items-center gap-3">
@@ -140,8 +167,19 @@ const AppInner = () => (
             element={<Navigate to="/dashboard/continue-rating" replace />}
           />
 
-          {/* Fallback: anything else lands on the public landing page. */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Public, full-bleed error pages. Each has its own URL so a
+              support link or a CDN error can deep-link straight to it. */}
+          <Route path="/400" element={<BadRequestPage />} />
+          <Route path="/401" element={<UnauthorizedPage />} />
+          <Route path="/403" element={<ForbiddenPage />} />
+          <Route path="/404" element={<NotFoundPage />} />
+          <Route path="/500" element={<ServerErrorPage />} />
+          <Route path="/502" element={<BadGatewayPage />} />
+          <Route path="/503" element={<ServiceUnavailablePage />} />
+
+          {/* Fallback: anything else renders the 404 page so the user gets a
+              friendly explanation instead of being silently redirected. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </Router>
