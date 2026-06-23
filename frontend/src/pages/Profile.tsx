@@ -106,6 +106,10 @@ export const Profile: React.FC = () => {
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
   const [libraryTotal, setLibraryTotal] = useState(0);
   const [libraryLoading, setLibraryLoading] = useState(false);
+  // We also keep a "show 50 by default" per-section cap so the two
+  // Movies / TV Show grids mirror the Library page's full grid look instead
+  // of rendering the prior 2–3 row preview.
+  const LIBRARY_PREVIEW_LIMIT = 50;
 
   // Re-fetch the profile and reconcile local state with server truth. Used
   // both as the initial load and after any friend action so that
@@ -186,7 +190,7 @@ export const Profile: React.FC = () => {
       .list({
         user_id: profile.id,
         page: 1,
-        limit: 12,
+        limit: LIBRARY_PREVIEW_LIMIT,
         sort_by: "updated_at",
         sort_dir: "desc",
       })
@@ -656,10 +660,13 @@ export const Profile: React.FC = () => {
       )}
 
       {/* Library preview — only rendered when the viewer is allowed to see
-          this profile's library (own profile, or accepted friend). */}
+          this profile's library (own profile, or accepted friend). Split
+          into Movies and TV Shows sections so each gets its own grid, and
+          the layout mirrors the Library page's grid view (same poster card
+          chrome, dense-card wrapper, hover state). */}
       {canViewLibrary && (
-        <section aria-label="Library preview">
-          <div className="flex items-baseline justify-between mb-3">
+        <section aria-label="Library preview" className="space-y-6">
+          <div className="flex items-baseline justify-between">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Archive className="w-5 h-5 text-theme-secondary" />
               Library
@@ -670,7 +677,7 @@ export const Profile: React.FC = () => {
           </div>
 
           {libraryLoading ? (
-            <div className="flex items-center justify-center h-40 text-theme-secondary gap-2">
+            <div className="dense-card flex items-center justify-center h-40 text-theme-secondary gap-2">
               <Loader2 className="w-5 h-5 animate-spin" />
               Loading library…
             </div>
@@ -681,50 +688,100 @@ export const Profile: React.FC = () => {
                 : `@${profile.username ?? "user"} hasn't added anything to their library yet.`}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {libraryItems.map((item) => (
-                <Link
-                  key={item.id}
-                  to={mediaPath(item.media_type, item.tmdb_id)}
-                  className="group dense-card overflow-hidden p-0 hover:border-[#10b981]/40 transition-colors"
-                >
-                  <div className="aspect-[2/3] w-full bg-theme-tertiary overflow-hidden">
-                    {item.poster_url ? (
-                      <img
-                        src={item.poster_url}
-                        alt={item.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-theme-muted text-xs">
-                        No poster
-                      </div>
-                    )}
-                  </div>
-                  <div className="px-2 py-1.5">
-                    <p className="text-xs font-medium truncate" title={item.title}>
-                      {item.title}
-                    </p>
-                    <p className="text-[10px] uppercase tracking-wide text-theme-secondary">
-                      <span
-                        className={
-                          item.media_type === "movie"
-                            ? "text-blue-400"
-                            : "text-purple-400"
-                        }
-                      >
-                        {item.media_type === "movie" ? "Movie" : "TV"}
-                      </span>
-                      {item.release_year ? ` · ${item.release_year}` : ""}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <>
+              <ProfileLibrarySection
+                title="Movies"
+                icon={<FilmIcon className="w-5 h-5 text-blue-400" />}
+                items={libraryItems.filter((it) => it.media_type === "movie")}
+                totalLabel="movies"
+              />
+              <ProfileLibrarySection
+                title="TV Shows"
+                icon={<TvIcon className="w-5 h-5 text-purple-400" />}
+                items={libraryItems.filter((it) => it.media_type === "tv")}
+                totalLabel="shows"
+              />
+            </>
           )}
         </section>
       )}
+    </div>
+  );
+};
+
+/**
+ * One Media Type section in the profile library preview.
+ *
+ * Renders the same `dense-card` + `aspect-[2/3]` poster card chrome as the
+ * Library page's grid view, with a header showing the section icon, label,
+ * and total count. When the section is empty (e.g. user only has TV in
+ * their library), we render a small empty card explaining that so the
+ * page never shows a naked header with no content.
+ */
+const ProfileLibrarySection: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  items: LibraryItem[];
+  totalLabel: string;
+}> = ({ title, icon, items, totalLabel }) => {
+  // Hide sections with zero items so the page doesn't render an empty
+  // header + empty card (which would look broken) — unless the user
+  // explicitly wants to see the "nothing here yet" affordance.
+  if (items.length === 0) return null;
+
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-3">
+        <h3 className="text-md font-semibold flex items-center gap-2">
+          {icon}
+          {title}
+        </h3>
+        <span className="text-xs text-theme-secondary">
+          {items.length} {totalLabel}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        {items.map((item) => (
+          <Link
+            key={item.id}
+            to={mediaPath(item.media_type, item.tmdb_id)}
+            className="group dense-card overflow-hidden p-0 hover:border-[#10b981]/40 transition-colors"
+          >
+            <div className="aspect-[2/3] w-full bg-theme-tertiary overflow-hidden">
+              {item.poster_url ? (
+                <img
+                  src={item.poster_url}
+                  alt={item.title}
+                  loading="lazy"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-theme-muted text-xs">
+                  No poster
+                </div>
+              )}
+            </div>
+            <div className="px-2 py-1.5">
+              <p className="text-xs font-medium truncate" title={item.title}>
+                {item.title}
+              </p>
+              <p className="text-[10px] uppercase tracking-wide text-theme-secondary">
+                <span
+                  className={
+                    item.media_type === "movie"
+                      ? "text-blue-400"
+                      : "text-purple-400"
+                  }
+                >
+                  {item.media_type === "movie" ? "Movie" : "TV"}
+                </span>
+                {item.release_year ? ` · ${item.release_year}` : ""}
+              </p>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 };
