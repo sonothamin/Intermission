@@ -22,7 +22,7 @@ const PRIMARY_LINKS: NavItem[] = [
  *
  * - Sticky, frosted-glass header that lifts its background opacity on scroll.
  * - Renders a desktop inline nav, a mobile slide-down sheet, and exposes the
- *   theme switcher + a contextual auth CTA ("Open dashboard" when signed in,
+ *   theme switcher + a contextual auth CTA ("Get started" once the user is
  *   "Sign in" otherwise).
  * - Hash-anchor links (/#features) work on the landing page and gracefully
  *   become in-page scroll triggers when the user is already on `/`.
@@ -139,7 +139,7 @@ export const MarketingNav: React.FC = () => {
               className="btn-primary inline-flex items-center gap-2 text-sm"
             >
               <Sparkles className="h-4 w-4" />
-              Open dashboard
+              Get started
             </Link>
           ) : (
             <>
@@ -251,7 +251,7 @@ export const MarketingNav: React.FC = () => {
               className="btn-primary flex w-full items-center justify-center gap-2 text-sm"
             >
               <Sparkles className="h-4 w-4" />
-              Open dashboard
+              Get started
             </Link>
           ) : (
             <div className="grid grid-cols-2 gap-2">

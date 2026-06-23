@@ -114,8 +114,22 @@ const AppInner = () => (
             <Route path="settings" element={<Settings />} />
             <Route path="movie/:id" element={<MovieDetail />} />
             <Route path="show/:id" element={<ShowDetail />} />
-            <Route path="continue-rating" element={<ContinueRatingPage />} />
+            {/* Legacy nested path — redirect to the top-level recovery flow. */}
+            <Route path="continue-rating" element={<Navigate to="/continue-rating" replace />} />
           </Route>
+
+          {/* Top-level "continue your rating" recovery flow. Protected, but
+              not nested under the dashboard layout — it renders its own chrome
+              and is reachable from anywhere (Dashboard card, Library row,
+              deep-link from a notification, etc.). */}
+          <Route
+            path="/continue-rating"
+            element={
+              <ProtectedRoute>
+                <ContinueRatingPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Fallback: anything else lands on the public landing page. */}
           <Route path="*" element={<Navigate to="/" replace />} />
