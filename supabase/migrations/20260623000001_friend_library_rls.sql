@@ -37,7 +37,7 @@ $$;
 
 -- Make the helper callable by any RLS-evaluated query (it's invoked from
 -- policy expressions, so it runs in the context of the querying role).
-GRANT EXECUTE ON FUNCTION public.is_accepted_friend(UUID, UUID) TO authenticated, anon, service_role;
+GRANT EXECUTE ON FUNCTION public.is_accepted_friend(UUID, UUID) TO authenticated, anon;
 
 COMMENT ON FUNCTION public.is_accepted_friend(UUID, UUID) IS
   'Returns true when the two given users have an accepted friendship in either direction. SECURITY DEFINER bypasses the friendships RLS so it can be used inside RLS policy expressions without recursion.';
