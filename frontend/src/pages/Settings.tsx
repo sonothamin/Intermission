@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { profileApi, UserProfile, settingsApi, UserSettings, accountApi, ImportResult, libraryApi, scrobbleApi, mediaApi, episodeApi } from "../lib/api";
 import { ImportFormatHelp } from "../components/ImportFormatHelp";
-import { Loader2, Save, Download, Upload, AlertTriangle, User as UserIcon, X, Lock, ChevronRight, Globe, MapPin, Eye, EyeOff, Bell, Film, Tv, Layers } from "lucide-react";
+import { Loader2, Save, Download, Upload, AlertTriangle, User as UserIcon, X, Lock, ChevronRight, Globe, MapPin, Eye, EyeOff, Bell, Layers } from "lucide-react";
 import { parseImportContent, ClientParsedImport } from "../lib/importParser";
 import { CustomSelect } from "../components/CustomSelect";
 import { Toggle } from "../components/Toggle";
@@ -69,7 +69,17 @@ export const Settings: React.FC = () => {
         setDisplayName(profileRes.profile.display_name || "");
         setUsername(profileRes.profile.username || "");
         setBio(profileRes.profile.bio || "");
+        setWebsite(profileRes.profile.website || "");
+        setLocation(profileRes.profile.location || "");
+        setIsPublic(profileRes.profile.is_public ?? true);
         setThemeLocal(settingsRes.theme);
+        setPreferredLanguage(settingsRes.preferred_language || "en");
+        setPreferredRegion(settingsRes.preferred_region || "US");
+        setAdultContent(settingsRes.adult_content ?? false);
+        setAutoMarkWatched(settingsRes.auto_mark_watched ?? true);
+        setShowSpoilers(settingsRes.show_spoilers ?? false);
+        setDefaultListView(settingsRes.default_list_view || "grid");
+        setNotificationsEnabled(settingsRes.notifications_enabled ?? true);
       } catch (err) {
         console.error(err);
       } finally {
@@ -91,10 +101,20 @@ export const Settings: React.FC = () => {
         profileApi.update({
           display_name: displayName,
           username,
-          bio
+          bio,
+          website: website.trim() || null,
+          location: location.trim() || null,
+          is_public: isPublic,
         }),
         settingsApi.update({
-          theme
+          theme,
+          preferred_language: preferredLanguage,
+          preferred_region: preferredRegion,
+          adult_content: adultContent,
+          auto_mark_watched: autoMarkWatched,
+          show_spoilers: showSpoilers,
+          default_list_view: defaultListView,
+          notifications_enabled: notificationsEnabled,
         })
       ]);
       setThemeCtx(theme as "dark" | "light" | "system");
@@ -482,25 +502,204 @@ export const Settings: React.FC = () => {
               placeholder="Tell us about your favorite movies..."
             />
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-theme-secondary mb-1 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5" /> Website
+              </label>
+              <input
+                type="url"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                className="w-full"
+                placeholder="https://yoursite.com"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-theme-secondary mb-1 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" /> Location
+              </label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="w-full"
+                placeholder="Brooklyn, NY"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-theme">
+            <Toggle
+              id="profile-public"
+              inline={false}
+              checked={isPublic}
+              onChange={setIsPublic}
+              label={
+                <span className="flex items-center gap-1.5">
+                  {isPublic ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  Public profile
+                </span>
+              }
+              description="When on, your profile page is visible to anyone with the link. Off hides it from other users."
+            />
+          </div>
         </section>
 
         {/* Preferences Section */}
-        <section className="dense-card space-y-6">
+        <section className="dense-card space-y-8">
           <h2 className="font-semibold text-lg border-b border-theme pb-2">Preferences</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-theme-secondary mb-1">Theme</label>
-              <CustomSelect
-                value={theme}
-                onChange={(val) => setThemeLocal(val as "dark" | "light" | "system")}
-                className="w-full bg-theme-secondary border border-theme rounded"
-                buttonClassName="px-3 py-2"
-                options={[
-                  { value: "dark", label: "Dark" },
-                  { value: "light", label: "Light" },
-                  { value: "system", label: "System Default" }
-                ]}
+          {/* ── Appearance ── */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-theme-muted">
+              Appearance
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-theme-secondary mb-1">Theme</label>
+                <CustomSelect
+                  value={theme}
+                  onChange={(val) => setThemeLocal(val as "dark" | "light" | "system")}
+                  className="w-full bg-theme-secondary border border-theme rounded"
+                  buttonClassName="px-3 py-2"
+                  options={[
+                    { value: "dark", label: "Dark" },
+                    { value: "light", label: "Light" },
+                    { value: "system", label: "System Default" }
+                  ]}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-theme-secondary mb-1">Language</label>
+                <CustomSelect
+                  value={preferredLanguage}
+                  onChange={setPreferredLanguage}
+                  className="w-full bg-theme-secondary border border-theme rounded"
+                  buttonClassName="px-3 py-2"
+                  options={[
+                    { value: "en", label: "English" },
+                    { value: "es", label: "Español" },
+                    { value: "fr", label: "Français" },
+                    { value: "de", label: "Deutsch" },
+                    { value: "it", label: "Italiano" },
+                    { value: "pt", label: "Português" },
+                    { value: "ja", label: "日本語" },
+                    { value: "ko", label: "한국어" },
+                    { value: "zh", label: "中文" },
+                    { value: "ar", label: "العربية" },
+                  ]}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-theme-secondary mb-1">Region</label>
+                <CustomSelect
+                  value={preferredRegion}
+                  onChange={setPreferredRegion}
+                  className="w-full bg-theme-secondary border border-theme rounded"
+                  buttonClassName="px-3 py-2"
+                  options={[
+                    { value: "US", label: "United States" },
+                    { value: "GB", label: "United Kingdom" },
+                    { value: "CA", label: "Canada" },
+                    { value: "AU", label: "Australia" },
+                    { value: "DE", label: "Germany" },
+                    { value: "FR", label: "France" },
+                    { value: "ES", label: "Spain" },
+                    { value: "IT", label: "Italy" },
+                    { value: "JP", label: "Japan" },
+                    { value: "KR", label: "South Korea" },
+                    { value: "BR", label: "Brazil" },
+                    { value: "MX", label: "Mexico" },
+                    { value: "IN", label: "India" },
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Library defaults ── */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-theme-muted">
+              Library defaults
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-theme-secondary mb-1">
+                  Default list view
+                </label>
+                <CustomSelect
+                  value={defaultListView}
+                  onChange={(val) => setDefaultListView(val as "grid" | "list" | "compact")}
+                  className="w-full bg-theme-secondary border border-theme rounded"
+                  buttonClassName="px-3 py-2"
+                  options={[
+                    { value: "grid", label: "Grid" },
+                    { value: "list", label: "List" },
+                    { value: "compact", label: "Compact" },
+                  ]}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 pt-1">
+              <Toggle
+                id="auto-mark-watched"
+                inline={false}
+                checked={autoMarkWatched}
+                onChange={setAutoMarkWatched}
+                label="Auto-mark watched"
+                description="When you finish a movie or episode, Intermission marks it as watched automatically."
+              />
+            </div>
+          </div>
+
+          {/* ── Content ── */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-theme-muted">
+              Content
+            </h3>
+            <div className="flex flex-col gap-3">
+              <Toggle
+                id="show-spoilers"
+                inline={false}
+                checked={showSpoilers}
+                onChange={setShowSpoilers}
+                label="Show spoilers in overviews"
+                description="Off hides plot details until you click to reveal them."
+              />
+              <Toggle
+                id="adult-content"
+                inline={false}
+                checked={adultContent}
+                onChange={setAdultContent}
+                label={
+                  <span className="flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5" /> Include adult content in search
+                  </span>
+                }
+                description="Lets TMDB adult titles surface in search results."
+              />
+            </div>
+          </div>
+
+          {/* ── Notifications ── */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-theme-muted">
+              Notifications
+            </h3>
+            <div className="flex flex-col gap-3">
+              <Toggle
+                id="notifications-enabled"
+                inline={false}
+                checked={notificationsEnabled}
+                onChange={setNotificationsEnabled}
+                label={
+                  <span className="flex items-center gap-1.5">
+                    <Bell className="w-3.5 h-3.5" /> In-app notifications
+                  </span>
+                }
+                description="Toasts, watch reminders, and weekly digest banners."
               />
             </div>
           </div>
