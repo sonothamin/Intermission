@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { socialApi, FriendUser, FriendshipRow, SocialSearchResult } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
+import { refreshFriendRequestCount } from "../lib/friendRequestCount";
 
 type Tab = "friends" | "incoming" | "outgoing" | "find";
 
@@ -118,7 +119,8 @@ export const Friends: React.FC = () => {
       await socialApi.sendRequest({ user_id: target.user_id });
       toast.success(`Friend request sent to @${target.username ?? "user"}.`);
       // Refresh outgoing so the count badge updates and the row is visible on
-      // the outgoing tab.
+      // the outgoing tab. Sending a request doesn't change the *incoming* list
+      // for us, so we don't need to refresh the sidebar badge here.
       const res = await socialApi.listRequests("outgoing");
       setOutgoing(res.requests ?? []);
     } catch (err: any) {
@@ -132,8 +134,12 @@ export const Friends: React.FC = () => {
     try {
       await socialApi.respondRequest(row.friendship_id, true);
       toast.success(`You're now friends with @${row.user.username ?? "user"}.`);
-      // Refresh friends so the new friend appears in the primary list.
-      const res = await socialApi.listFriends();
+      // Refresh friends so the new friend appears in the primary list, and
+      // refresh the sidebar/mobile-nav badge so the incoming count drops.
+      const [res] = await Promise.all([
+        socialApi.listFriends(),
+        refreshFriendRequestCount(),
+      ]);
       setFriends(res.friends ?? []);
     } catch (err: any) {
       // Roll back: re-insert in original position.
@@ -146,6 +152,8 @@ export const Friends: React.FC = () => {
     setIncoming((rows) => rows.filter((r) => r.friendship_id !== row.friendship_id));
     try {
       await socialApi.respondRequest(row.friendship_id, false);
+      // Badge may have dropped — sync the sidebar/mobile-nav counter.
+      void refreshFriendRequestCount();
     } catch (err: any) {
       setIncoming((rows) => [row, ...rows]);
       toast.error(err?.message ?? "Couldn't decline request.");

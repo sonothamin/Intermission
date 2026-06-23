@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { useTheme, type Theme } from "../context/ThemeContext";
+import { useFriendRequestCount } from "../lib/friendRequestCount";
 
 const SIDEBAR_KEY = "intermission-sidebar-collapsed";
 
@@ -28,6 +29,7 @@ export const Layout: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  const { count: incomingRequestCount } = useFriendRequestCount();
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(SIDEBAR_KEY) === "true",
   );
@@ -170,12 +172,23 @@ export const Layout: React.FC = () => {
               location.pathname === item.path ||
               (item.path !== "/dashboard" &&
                 location.pathname.startsWith(item.path));
+            // Only the Friends entry carries a count badge — we don't want to
+            // mislead users by putting badges on every nav item.
+            const badge =
+              item.name === "Friends" && incomingRequestCount > 0
+                ? incomingRequestCount > 99
+                  ? "99+"
+                  : String(incomingRequestCount)
+                : null;
             return (
               <Link
                 key={item.name}
                 to={item.path}
                 title={collapsed ? item.name : undefined}
-                className={`flex items-center rounded-md transition-colors ${
+                aria-label={
+                  badge ? `${item.name} (${badge} pending requests)` : item.name
+                }
+                className={`relative flex items-center rounded-md transition-colors ${
                   collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5"
                 }`}
                 style={{
@@ -185,7 +198,26 @@ export const Layout: React.FC = () => {
                 }}
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
-                {!collapsed && <span>{item.name}</span>}
+                {!collapsed && <span className="flex-1">{item.name}</span>}
+                {badge && !collapsed && (
+                  <span
+                    aria-hidden="true"
+                    className="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-[10px] font-semibold leading-none"
+                    style={{
+                      background: "var(--accent-primary)",
+                      color: "#ffffff",
+                    }}
+                  >
+                    {badge}
+                  </span>
+                )}
+                {badge && collapsed && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                    style={{ background: "var(--accent-primary)" }}
+                  />
+                )}
               </Link>
             );
           })}
@@ -440,19 +472,44 @@ export const Layout: React.FC = () => {
         className="fixed bottom-0 left-0 right-0 h-16 backdrop-blur-md z-40 flex items-center justify-around px-2 md:hidden shell-glass"
         style={{ borderTopWidth: "1px", borderTopStyle: "solid" }}
       >
-        {navItems.map((item) => {
+        {navItems
+          .filter((item) => item.name !== "Settings")
+          .map((item) => {
           const isActive =
             location.pathname === item.path ||
             (item.path !== "/dashboard" &&
               location.pathname.startsWith(item.path));
+          const badge =
+            item.name === "Friends" && incomingRequestCount > 0
+              ? incomingRequestCount > 99
+                ? "99+"
+                : String(incomingRequestCount)
+              : null;
           return (
             <Link
               key={item.name}
               to={item.path}
-              className="flex flex-col items-center justify-center flex-1 py-1 gap-1 transition-colors"
+              aria-label={
+                badge ? `${item.name} (${badge} pending requests)` : item.name
+              }
+              className="relative flex flex-col items-center justify-center flex-1 py-1 gap-1 transition-colors"
               style={{ color: isActive ? "var(--accent-primary)" : "var(--text-secondary)" }}
             >
-              <item.icon className="w-5 h-5" />
+              <div className="relative">
+                <item.icon className="w-5 h-5" />
+                {badge && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-1.5 -right-2 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-semibold leading-none"
+                    style={{
+                      background: "var(--accent-primary)",
+                      color: "#ffffff",
+                    }}
+                  >
+                    {badge}
+                  </span>
+                )}
+              </div>
               <span className="text-[10px] font-medium tracking-tight">{item.name}</span>
             </Link>
           );
