@@ -126,9 +126,9 @@ export const Profile: React.FC = () => {
         // for the `accepted` case we don't need it.
         if (next === "accepted") setFriendshipId(null);
         return next;
-      } catch (err: any) {
+      } catch (err) {
         if (!opts?.silent) {
-          const msg = (err?.message ?? "").toLowerCase();
+          const msg = (err instanceof Error ? err.message : String(err ?? "")).toLowerCase();
           if (msg.includes("not found")) {
             setError("not_found");
           } else if (msg.includes("access denied") || msg.includes("forbidden")) {
