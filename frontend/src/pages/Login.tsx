@@ -8,7 +8,7 @@ import { AuthDivider } from "../components/AuthDivider";
 import { FormField, FieldLabel } from "../components/FormField";
 import { GoogleAuthButton } from "../components/GoogleAuthButton";
 import { PasswordInput } from "../components/PasswordInput";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Loader2 } from "lucide-react";
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -84,7 +84,14 @@ export const Login: React.FC = () => {
             disabled={loading}
             className="btn-primary mt-1 py-2 w-full flex justify-center items-center gap-2"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              "Sign in"
+            )}
           </button>
         </form>
 
