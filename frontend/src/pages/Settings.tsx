@@ -24,7 +24,17 @@ export const Settings: React.FC = () => {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
+  const [website, setWebsite] = useState("");
+  const [location, setLocation] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   const [theme, setThemeLocal] = useState<"dark" | "light" | "system">(themeCtx);
+  const [preferredLanguage, setPreferredLanguage] = useState("en");
+  const [preferredRegion, setPreferredRegion] = useState("US");
+  const [adultContent, setAdultContent] = useState(false);
+  const [autoMarkWatched, setAutoMarkWatched] = useState(true);
+  const [showSpoilers, setShowSpoilers] = useState(false);
+  const [defaultListView, setDefaultListView] = useState<"grid" | "list" | "compact">("grid");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<"json" | "csv">("json");
