@@ -36,15 +36,49 @@ Deno.serve(async (req: Request) => {
 
   try {
     // ─────────────────────────────────────────────────────────────────────────
-    // GET — profile (own or public)
+    // GET — profile (own or public, or search)
     // ─────────────────────────────────────────────────────────────────────────
     if (req.method === "GET") {
       const targetUserId = params.get("user_id");
       const targetUsername = params.get("username");
+      const searchQuery = params.get("q");
 
       // Try to get the requesting user (optional)
       const requestingUser = await tryGetAuthUser(req);
       const db = requestingUser ? getUserClient(req) : getAdminClient();
+
+      // ── Search mode ─────────────────────────────────────────────────────
+      // Returns public-only profile rows whose username OR display_name
+      // matches the query (case-insensitive, prefix-or-substring on
+      // username; substring on display_name). Results are trimmed to 20
+      // and ordered by username to keep the response stable.
+      if (searchQuery !== null) {
+        const q = searchQuery.trim();
+        if (q.length < 2) {
+          return badRequest("search query must be at least 2 characters", origin);
+        }
+        if (q.length > 50) {
+          return badRequest("search query must be 50 characters or fewer", origin);
+        }
+        // Escape % and _ for ilike patterns
+        const safe = q.replace(/[%_\\]/g, (m) => "\\" + m);
+        const pattern = `%${safe}%`;
+        const { data: matches, error: searchErr } = await getAdminClient()
+          .from("profiles")
+          .select("id, username, display_name, avatar_url, bio, is_public")
+          .eq("is_public", true)
+          .or(`username.ilike.${pattern},display_name.ilike.${pattern}`)
+          .order("username", { ascending: true })
+          .limit(20);
+        if (searchErr) throw searchErr;
+        return new Response(
+          JSON.stringify({ profiles: matches ?? [] }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+          },
+        );
+      }
 
       // Resolve the user id from whichever identifier was supplied. Username
       // lookups go through the admin client because RLS hides private profiles

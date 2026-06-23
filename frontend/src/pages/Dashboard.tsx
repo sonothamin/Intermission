@@ -15,6 +15,7 @@ import { DonutChart } from "../components/DonutChart";
 import { EmptyChartState } from "../components/EmptyChartState";
 import { HorizontalBarChart } from "../components/HorizontalBarChart";
 import { ContinueWatching } from "../components/ContinueWatching";
+import { PeopleSearch } from "../components/PeopleSearch";
 import { chartAxisStroke, chartGridStroke } from "../lib/chartTheme";
 
 const getFlagEmoji = (countryCode: string) => {
@@ -127,6 +128,16 @@ export const Dashboard: React.FC = () => {
             ]}
           />
         </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+        <label
+          htmlFor="people-search"
+          className="text-xs font-medium text-theme-secondary whitespace-nowrap"
+        >
+          Find people
+        </label>
+        <PeopleSearch />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

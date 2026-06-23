@@ -167,6 +167,19 @@ export interface UserProfile {
   updated_at: string;
 }
 
+/**
+ * Slim row returned by `profileApi.search` — only the fields the people
+ * picker actually renders. Private profiles never appear here.
+ */
+export interface ProfileSearchResult {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  is_public: boolean;
+}
+
 export interface TmdbSeasonSummary {
   season_number: number;
   name: string;
@@ -592,6 +605,14 @@ export const profileApi = {
       "profile",
       { username },
     ),
+
+  /**
+   * Search public profiles by username or display_name substring. Used by
+   * the Dashboard "find people" search box. Only returns is_public = true
+   * rows so private accounts stay hidden from the index.
+   */
+  search: (query: string) =>
+    getFunction<{ profiles: ProfileSearchResult[] }>("profile", { q: query }),
 
   update: (updates: Partial<{
     username: string;
