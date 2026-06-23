@@ -90,14 +90,20 @@ const ServiceUnavailablePage = lazy(() =>
 );
 
 const PageFallback: React.FC = () => (
-  <div className="h-screen flex flex-col items-center justify-center bg-theme-primary text-theme-primary gap-4">
-    <div className="flex items-center gap-3">
+  <div className="h-screen flex flex-col items-center justify-center bg-theme-primary text-theme-primary gap-5">
+    <div className="flex items-center gap-3 loader-fade loader-fade-delay-1">
       <Film className="w-8 h-8 text-[#10b981]" />
       <span className="font-bold text-2xl tracking-tight" style={{ color: "var(--text-primary)" }}>
         Intermission
       </span>
     </div>
-    <Loader2 className="w-6 h-6 text-[#10b981] animate-spin" />
+    <div className="loader-spinner-wrap w-8 h-8 loader-fade loader-fade-delay-2">
+      <span className="loader-spinner-ring" aria-hidden="true" />
+      <Loader2 className="w-6 h-6 text-[#10b981] animate-spin relative" />
+    </div>
+    <div className="loader-dots loader-fade loader-fade-delay-3" aria-hidden="true">
+      <span /><span /><span />
+    </div>
   </div>
 );
 
@@ -107,12 +113,18 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-theme-primary text-theme-primary">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="h-screen flex flex-col items-center justify-center bg-theme-primary text-theme-primary gap-5">
+        <div className="flex items-center gap-3 mb-2 loader-fade loader-fade-delay-1">
           <Film className="w-10 h-10 text-[#10b981]" />
           <span className="font-bold text-3xl tracking-tight" style={{ color: "var(--text-primary)" }}>Intermission</span>
         </div>
-        <Loader2 className="w-6 h-6 text-[#10b981] animate-spin" />
+        <div className="loader-spinner-wrap w-8 h-8 loader-fade loader-fade-delay-2">
+          <span className="loader-spinner-ring" aria-hidden="true" />
+          <Loader2 className="w-6 h-6 text-[#10b981] animate-spin relative" />
+        </div>
+        <div className="loader-dots loader-fade loader-fade-delay-3" aria-hidden="true">
+          <span /><span /><span />
+        </div>
       </div>
     );
   }
