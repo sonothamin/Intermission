@@ -1,7 +1,7 @@
 import type { MediaType } from "./api";
 
 export function mediaPath(type: MediaType, tmdbId: number): string {
-  return type === "movie" ? `/movie/${tmdbId}` : `/show/${tmdbId}`;
+  return type === "movie" ? `/dashboard/movie/${tmdbId}` : `/dashboard/show/${tmdbId}`;
 }
 
 export function formatRuntime(minutes: number | null | undefined): string {
