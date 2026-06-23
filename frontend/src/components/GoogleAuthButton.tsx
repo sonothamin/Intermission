@@ -31,9 +31,11 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
       disabled={isDisabled}
       onClick={async () => {
         setPending(true);
+        // Send post-OAuth return straight to the dashboard so users who sign
+        // in / sign up via Google don't get bounced back to the landing page.
         const { error: oauthError } = await supabase.auth.signInWithOAuth({
           provider: "google",
-          options: { redirectTo: window.location.origin },
+          options: { redirectTo: `${window.location.origin}/dashboard` },
         });
         if (oauthError) {
           onError?.(oauthError.message);

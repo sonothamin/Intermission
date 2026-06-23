@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Film, Menu, X, Sparkles } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { ThemeSwitcher } from "../ThemeSwitcher";
-import { useTheme } from "../../context/ThemeContext";
 
 interface NavItem {
   label: string;
@@ -14,22 +12,20 @@ const PRIMARY_LINKS: NavItem[] = [
   { label: "Features", to: "/#features" },
   { label: "How it works", to: "/#how" },
   { label: "FAQ", to: "/#faq" },
-  { label: "Docs", to: "/docs/privacy-policy" },
 ];
 
 /**
  * Top navigation used on the public marketing site.
  *
  * - Sticky, frosted-glass header that lifts its background opacity on scroll.
- * - Renders a desktop inline nav, a mobile slide-down sheet, and exposes the
- *   theme switcher + a contextual auth CTA ("Get started" once the user is
- *   "Sign in" otherwise).
+ * - Renders a desktop inline nav, a mobile slide-down sheet, and a
+ *   contextual auth CTA ("Get started" once the user is signed in, otherwise
+ *   "Sign in" + "Get started").
  * - Hash-anchor links (/#features) work on the landing page and gracefully
  *   become in-page scroll triggers when the user is already on `/`.
  */
 export const MarketingNav: React.FC = () => {
   const { user } = useAuth();
-  const { theme, setTheme } = useTheme();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -106,7 +102,6 @@ export const MarketingNav: React.FC = () => {
         >
           {PRIMARY_LINKS.map((item) => {
             const isHash = item.to.includes("#");
-            const isDocs = item.to.startsWith("/docs");
             return (
               <NavLink
                 key={item.to}
@@ -121,18 +116,12 @@ export const MarketingNav: React.FC = () => {
                 end={isHash}
               >
                 {item.label}
-                {isDocs && (
-                  <span className="ml-1.5 inline-flex items-center rounded-full border border-theme px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-theme-muted">
-                    Docs
-                  </span>
-                )}
               </NavLink>
             );
           })}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <ThemeSwitcher collapsed />
           {user ? (
             <Link
               to="/dashboard"
@@ -178,7 +167,7 @@ export const MarketingNav: React.FC = () => {
       <div
         ref={sheetRef}
         className={`md:hidden overflow-hidden border-t border-theme transition-all duration-300 ${
-          mobileOpen ? "max-h-[480px] opacity-100" : "max-h-0 opacity-0"
+          mobileOpen ? "max-h-[360px] opacity-100" : "max-h-0 opacity-0"
         }`}
         style={{ background: "var(--bg-primary)" }}
       >
@@ -200,46 +189,6 @@ export const MarketingNav: React.FC = () => {
               {item.label}
             </NavLink>
           ))}
-        </div>
-        <div
-          className="px-4 py-3"
-          style={{ borderTop: "1px solid var(--border-subtle)" }}
-        >
-          <p className="px-1 pb-2 text-[10px] font-semibold uppercase tracking-wider text-theme-muted">
-            Theme
-          </p>
-          <div
-            className="flex rounded-md p-0.5"
-            style={{
-              background: "var(--bg-secondary)",
-              border: "1px solid var(--border-subtle)",
-            }}
-          >
-            {(
-              [
-                { value: "light", label: "Light" },
-                { value: "dark", label: "Dark" },
-                { value: "system", label: "System" },
-              ] as { value: "light" | "dark" | "system"; label: string }[]
-            ).map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setTheme(value)}
-                className="flex-1 rounded py-1.5 text-xs font-medium transition-colors"
-                style={{
-                  color:
-                    theme === value
-                      ? "var(--accent-primary)"
-                      : "var(--text-secondary)",
-                  background:
-                    theme === value ? "var(--accent-light)" : "transparent",
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
         </div>
         <div
           className="space-y-2 px-4 py-3"
