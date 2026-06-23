@@ -326,7 +326,7 @@ export const Library: React.FC = () => {
                   <thead className="bg-theme-secondary sticky top-0 z-10 shadow-sm border-b border-theme">
                     <tr>
                       <th className="w-16">Poster</th>
-                      <th>Title</th>
+                      <th className="min-w-0">Title</th>
                       <th className="w-24">Type</th>
                       <th className="w-40">Status</th>
                       <th className="w-32">Progress</th>
@@ -348,12 +348,12 @@ export const Library: React.FC = () => {
                             )}
                           </Link>
                         </td>
-                        <td>
+                        <td className="min-w-0">
                           <Link
                             to={mediaPath(item.media_type, item.tmdb_id)}
-                            className="block hover:text-[#10b981] transition-colors"
+                            className="block hover:text-[#10b981] transition-colors overflow-hidden"
                           >
-                            <div className="font-medium text-theme-primary group-hover:text-[#10b981]">{item.title}</div>
+                            <div className="font-medium text-theme-primary group-hover:text-[#10b981] truncate">{item.title}</div>
                             <div className="text-xs text-theme-muted">{item.release_year || "—"}</div>
                           </Link>
                         </td>
