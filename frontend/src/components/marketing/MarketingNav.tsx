@@ -58,7 +58,7 @@ export const MarketingNav: React.FC = () => {
   return (
     <header
       className={`sticky top-0 z-50 w-full transition-colors duration-300 ${
-        scrolled ? "shell-glass" : "bg-transparent"
+        scrolled ? "shell-glass nav-glass" : "bg-transparent"
       }`}
       style={
         scrolled

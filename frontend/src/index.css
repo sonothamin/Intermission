@@ -234,6 +234,13 @@ button {
   border-bottom: 1px solid var(--border-subtle);
 }
 
+/* Frosted nav — keeps the shell-glass tint and blur but strips the halo
+   glow and emerald top gradient so the header reads as flat tinted glass. */
+.shell-glass.nav-glass {
+  background-image: none;
+  box-shadow: none;
+}
+
 /* Frosted shell — translucent emerald-tinted glass with a subtle outer halo.
    Used by the sidebar and the mobile top/bottom bars to keep the chrome
    feeling weightless against the page background. */
